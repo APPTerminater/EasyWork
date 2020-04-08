@@ -12,6 +12,10 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import cn.leancloud.AVObject;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+
 import butterknife.ButterKnife;
 import butterknife.BindView;
 
@@ -29,6 +33,23 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
+
+        AVObject testObject = new AVObject("TestObject");
+        testObject.put("words", "Hello world!");
+        testObject.put("words2", "Hello world2!");
+        //testObject.saveInBackground().blockingSubscribe();
+        // 将对象保存到云端
+        testObject.saveInBackground().subscribe(new Observer<AVObject>() {
+            public void onSubscribe(Disposable disposable) {}
+            public void onNext(AVObject todo) {
+                // 成功保存之后，执行其他逻辑
+                System.out.println("保存成功。objectId：" + todo.getObjectId());
+            }
+            public void onError(Throwable throwable) {
+                // 异常处理
+            }
+            public void onComplete() {}
+        });
 
         //点击登录按钮
         _loginButton.setOnClickListener(new View.OnClickListener() {
