@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp">
+
+        <TextView
+            android:layout_width="340dp"
+            android:layout_height="300dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+
+            android:gravity="center"
+            android:left="0dp"
+            android:top="104dp" />
+
+        <TextView
+            android:id="@+id/destination"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:layout_marginLeft="41dp"
+            android:layout_marginTop="25dp"
+
+            android:gravity="left"
+            android:left="20dp"
+            android:text="北京"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="20dp"
+            android:top="90dp" />
+
+        <TextView
+            android:id="@+id/step"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="150dp"
+            android:layout_marginTop="30dp"
+
+            android:gravity="center"
+            android:left="20dp"
+            android:text="10000步"
+            android:textColor="@color/colorPrimary"
+            android:textSize="16dp"
+            android:top="90dp" />
+
+        <Button
+            android:id="@+id/share"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginLeft="290dp"
+            android:layout_marginTop="25dp"
+            android:background="@android:color/transparent"
+
+            android:left="335dp"
+            android:top="114dp" />
+
+        <TextView
+            android:id="@+id/brief_info"
+            android:layout_width="290dp"
+            android:layout_height="85dp"
+            android:layout_marginLeft="30dp"
+            android:layout_marginTop="95dp"
+            android:gravity="left"
+            android:left="20dp"
+            android:text="旅行简介：我去北京了我去北京了我去北京了我去北京了我去北京了我去北京了我去北京了我去北京了我去北京了我去北京了"
+            android:textColor="@color/colorPrimary"
+            android:textSize="16dp"
+            android:top="210dp" />
+        <View
+            android:left="20dp"
+            android:top="195dp"
+            android:layout_width="320dp"
+            android:layout_height="1dp"
+            android:layout_marginLeft="21dp"
+            android:layout_marginTop="180dp"
+
+            />
+
+        <TextView
+            android:id="@+id/duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="30dp"
+            android:layout_marginTop="65dp"
+            android:gravity="left"
+            android:left="26dp"
+            android:text="2018/01/01-2018/01/31"
+
+            android:textSize="16dp"
+            android:top="130dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="30dp"
+            android:layout_marginTop="195dp"
+            android:gravity="left"
+            android:left="44dp"
+            android:text="Rating"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="18dp"
+            android:top="410dp" />
+        <RatingBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:isIndicator="false"
+            android:rating="1.5"
+            android:stepSize="0.1"
+            android:numStars="5"
+            android:id="@+id/ratingBar"
+            android:layout_marginLeft="105dp"
+            android:layout_marginTop="195dp"
+            />
+
+        <TextView
+            android:id="@+id/comment"
+            android:layout_width="290dp"
+            android:layout_height="60dp"
+            android:layout_marginLeft="30dp"
+            android:layout_marginTop="235dp"
+            android:gravity="left"
+            android:left="20dp"
+            android:text="你这是一次有趣的旅行！~"
+            android:textColor="@color/colorPrimary"
+            android:textSize="16dp"
+            android:top="210dp" />
+    </RelativeLayout>
+</LinearLayout>
