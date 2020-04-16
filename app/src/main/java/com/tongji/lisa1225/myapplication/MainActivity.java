@@ -42,11 +42,19 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private final int PAGE_COUNT = 10;
     private int lastVisibleItem = 0;
 
+    private String email,name,occupation,password;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+
+        MyLeanCloudApp app = (MyLeanCloudApp)this.getApplication();
+        email = app.getEmail();
+        name = app.getUserName();
+        occupation = app.getOccu();
+        password = app.getPassword();
 
         final int[] BGColor = {getResources().getColor(R.color.pinkDarkBlue),
                 getResources().getColor(R.color.pinkBlue),
@@ -54,8 +62,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 getResources().getColor(R.color.pinkYellow),
                 getResources().getColor(R.color.pinkRed)};
         final int BGColorNum = 5;
-
-
 
        /* LinearLayoutManager layoutManager = new LinearLayoutManager(this );
 //设置布局管理器
@@ -200,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     public class MyPagerAdapter extends FragmentPagerAdapter {
 
-        private final String[] TITLES = {"Categories", "Home", "Top Paid", "Top Free", "Top Grossing", "Top New Paid",
+        private final String[] TITLES = {name, "Home", "Top Paid", "Top Free", "Top Grossing", "Top New Paid",
                 "Top New Free", "Trending"};
 
         MyPagerAdapter(FragmentManager fm) {

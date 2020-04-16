@@ -6,6 +6,29 @@ import cn.leancloud.AVLogger;
 import cn.leancloud.AVOSCloud;
 
 public class MyLeanCloudApp extends Application {
+    private String userName,email,occu,password;;
+
+    public String getUserName() {
+        return userName;
+    }
+    public String getEmail() {
+        return email;
+    }
+    public String getOccu() {
+        return occu;
+    }
+    public String getPassword()
+    {
+        return password;
+    }
+
+    public void setUserInfo(String email,String userName, String occu, String password) {
+        this.userName = userName;
+        this.email = email;
+        this.occu = occu;
+        this.password = password;
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();

@@ -1,6 +1,13 @@
 <resources>
     <string name="app_name">Easy Work</string>
 
+    <string name="login">LOGIN</string>
+    <string name="create_account">CREATE ACCOUNT</string>
+
+    <string name="logo">LOGO</string>
+    <string name="name">Name</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
     <string name="ask_have">Already a member? Login</string>
     <string name="ask_not_have">No account yet? Create one</string>
 </resources>

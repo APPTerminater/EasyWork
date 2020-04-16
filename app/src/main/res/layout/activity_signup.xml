@@ -17,23 +17,34 @@
             android:layout_width="wrap_content"
             android:layout_height="72dp"
             android:layout_marginBottom="24dp"
-            android:layout_gravity="center_horizontal" />
+            android:layout_gravity="center_horizontal"
+            android:contentDescription="@string/logo"/>
+
+        <Spinner
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:spinnerMode="dialog"
+            android:id="@+id/spinner">
+        </Spinner>
 
         <!--  Name Label -->
         <EditText android:id="@+id/input_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textCapWords"
-            android:hint="Name"
+            android:hint="@string/name"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"/>
+
 
         <!-- Email Label -->
         <EditText android:id="@+id/input_email"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textEmailAddress"
-            android:hint="Email"
+            android:hint="@string/email"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"/>
 
@@ -42,7 +53,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPassword"
-            android:hint="Password"
+            android:hint="@string/password"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"/>
 
@@ -54,15 +65,16 @@
             android:layout_marginTop="24dp"
             android:layout_marginBottom="24dp"
             android:padding="12dp"
-            android:text="Create Account"/>
+            android:text="@string/create_account"/>
 
-        <TextView android:id="@+id/link_login"
+        <TextView
+            android:id="@+id/link_login"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
-            android:text="@string/ask_have"
             android:gravity="center"
-            android:textSize="16dip"/>
+            android:text="@string/ask_have"
+            android:textSize="18sp" />
 
     </LinearLayout>
 </ScrollView>

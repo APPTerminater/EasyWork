@@ -12,7 +12,10 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.List;
+
 import cn.leancloud.AVObject;
+import cn.leancloud.AVQuery;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 
@@ -28,28 +31,14 @@ public class LoginActivity extends AppCompatActivity {
     @BindView(R.id.btn_login) Button _loginButton;
     @BindView(R.id.link_signup) TextView _signupLink;
 
+    private AVQuery<AVObject> query = new AVQuery<>("UserInfo");
+    private String email,name,occupation,password;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
-
-        AVObject testObject = new AVObject("TestObject");
-        testObject.put("words", "Hello world!");
-        testObject.put("words2", "Hello world2!");
-        //testObject.saveInBackground().blockingSubscribe();
-        // 将对象保存到云端
-        testObject.saveInBackground().subscribe(new Observer<AVObject>() {
-            public void onSubscribe(Disposable disposable) {}
-            public void onNext(AVObject todo) {
-                // 成功保存之后，执行其他逻辑
-                System.out.println("保存成功。objectId：" + todo.getObjectId());
-            }
-            public void onError(Throwable throwable) {
-                // 异常处理
-            }
-            public void onComplete() {}
-        });
 
         //点击登录按钮
         _loginButton.setOnClickListener(new View.OnClickListener() {
@@ -88,16 +77,19 @@ public class LoginActivity extends AppCompatActivity {
         progressDialog.setMessage("Authenticating...");
         progressDialog.show();
 
-        String email = _emailText.getText().toString();
-        String password = _passwordText.getText().toString();
+        email = _emailText.getText().toString();
+        password = _passwordText.getText().toString();
 
-        // TODO: Implement your own authentication logic here.
+        // TODO: 判断输入的账号密码是否正确
+
 
         new android.os.Handler().postDelayed(
                 new Runnable() {
                     public void run() {
+                        //onLoginSuccess();
+                        queryEmailAndPassword(email,password);
                         // On complete call either onLoginSuccess or onLoginFailed
-                        onLoginSuccess();
+
                         // onLoginFailed();
                         progressDialog.dismiss();
                     }
@@ -127,15 +119,24 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void onLoginSuccess() {
+        MyLeanCloudApp app = (MyLeanCloudApp)this.getApplication();
+        app.setUserInfo(email, name, occupation, password);
+        _loginButton.setEnabled(true);
         Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
         //启动
         startActivity(mainIntent);
-        _loginButton.setEnabled(true);
+
        // finish();
     }
 
     public void onLoginFailed() {
-        Toast.makeText(getBaseContext(), "Login failed", Toast.LENGTH_LONG).show();
+        Toast.makeText(getBaseContext(), "This email or password is not correct!", Toast.LENGTH_LONG).show();
+
+        _loginButton.setEnabled(true);
+    }
+
+    public void onNoAccount() {
+        Toast.makeText(getBaseContext(), "This account is not existed!", Toast.LENGTH_LONG).show();
 
         _loginButton.setEnabled(true);
     }
@@ -161,5 +162,37 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         return valid;
+    }
+
+    //查询此邮箱是否已经注册过，若没有则进行注册
+    public void queryEmailAndPassword(final String mail, final String pass)
+    {
+        query.whereEqualTo("email", mail);
+        query.findInBackground().subscribe(new Observer<List<AVObject>>() {
+            public void onSubscribe(Disposable disposable) {}
+            public void onNext(List<AVObject> userInfo) {
+                if(userInfo.size()!=0)
+                {
+                    if(pass.equals(userInfo.get(0).getString("password")))
+                    {
+                        email = userInfo.get(0).getString("email");
+                        name = userInfo.get(0).getString("name");
+                        occupation = userInfo.get(0).getString("occu");
+                        password = userInfo.get(0).getString("password");
+                        onLoginSuccess();
+                    }
+                    else
+                    {
+                        onLoginFailed();
+                    }
+                }
+                else
+                {
+                    onNoAccount();
+                }
+            }
+            public void onError(Throwable throwable) {}
+            public void onComplete() {}
+        });
     }
 }
