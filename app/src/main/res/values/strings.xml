@@ -10,4 +10,10 @@
     <string name="password">Password</string>
     <string name="ask_have">Already a member? Login</string>
     <string name="ask_not_have">No account yet? Create one</string>
+    
+    <string name="program_name">ProgramName</string>
+    <string name="member1">Member1 Name</string>
+    <string name="member2">Member2 Name</string>
+    <string name="member3">Member3 Name</string>
+    <string name="submit">SUBMIT</string>
 </resources>

@@ -7,6 +7,7 @@ import android.util.Log;
 
 import android.content.Intent;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -37,6 +38,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
 
@@ -80,29 +82,21 @@ public class LoginActivity extends AppCompatActivity {
         email = _emailText.getText().toString();
         password = _passwordText.getText().toString();
 
-        // TODO: 判断输入的账号密码是否正确
-
-
         new android.os.Handler().postDelayed(
                 new Runnable() {
                     public void run() {
-                        //onLoginSuccess();
+                        // 判断输入的账号密码是否正确
                         queryEmailAndPassword(email,password);
                         // On complete call either onLoginSuccess or onLoginFailed
-
-                        // onLoginFailed();
                         progressDialog.dismiss();
                     }
                 }, 1000);
     }
 
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_SIGNUP) {
             if (resultCode == RESULT_OK) {
-
-                // TODO: Implement successful signup logic here
                 // By default we just finish the Activity and log them in automatically
                 Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
                 //启动
@@ -118,20 +112,29 @@ public class LoginActivity extends AppCompatActivity {
         moveTaskToBack(true);
     }
 
+    //账号密码正确
     public void onLoginSuccess() {
         MyLeanCloudApp app = (MyLeanCloudApp)this.getApplication();
         app.setUserInfo(email, name, occupation, password);
         _loginButton.setEnabled(true);
-        Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
-        //启动
-        startActivity(mainIntent);
-
+        //不同职业进入不同界面
+        if(occupation.equals("Producer"))
+        {
+            Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
+            //启动
+            startActivity(mainIntent);
+        }
+        else
+        {
+            Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
+            //启动
+            startActivity(mainIntent);
+        }
        // finish();
     }
 
     public void onLoginFailed() {
         Toast.makeText(getBaseContext(), "This email or password is not correct!", Toast.LENGTH_LONG).show();
-
         _loginButton.setEnabled(true);
     }
 
@@ -164,7 +167,7 @@ public class LoginActivity extends AppCompatActivity {
         return valid;
     }
 
-    //查询此邮箱是否已经注册过，若没有则进行注册
+    //查询此邮箱是否已经注册过，若注册过则判断密码是否正确
     public void queryEmailAndPassword(final String mail, final String pass)
     {
         query.whereEqualTo("email", mail);

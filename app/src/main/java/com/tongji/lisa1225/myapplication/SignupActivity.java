@@ -125,10 +125,10 @@ public class SignupActivity extends AppCompatActivity {
         app.setUserInfo(email, name, occupation, password);
         _signupButton.setEnabled(true);
         setResult(RESULT_OK, null);
-        Intent mainIntent = new Intent(SignupActivity.this, MainActivity.class);
+        //Intent mainIntent = new Intent(SignupActivity.this, MainActivity.class);
         //启动
-        startActivity(mainIntent);
-        //finish();
+        //startActivity(mainIntent);
+        finish();
     }
 
     public void onEmailExist()
@@ -211,7 +211,6 @@ public class SignupActivity extends AppCompatActivity {
             public void onSubscribe(Disposable disposable) {}
             public void onNext(AVObject todo) {
                 // 成功保存之后，执行其他逻辑
-                //todo
                 onSignupSuccess();
             }
             public void onError(Throwable throwable) {

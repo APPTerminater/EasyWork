@@ -5,34 +5,47 @@ import com.tongji.lisa1225.myapplication.Adapter.MainRVAdapter;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.view.ViewPager;
-import android.support.v7.widget.CardView;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v4.widget.DrawerLayout;
+import android.support.design.widget.NavigationView;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.TypedValue;
-import android.view.Menu;
+import android.text.Layout;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import cn.leancloud.AVObject;
+import cn.leancloud.AVQuery;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+
 import com.astuetz.PagerSlidingTabStrip;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener{
+    private static final String TAG = "MainActivity";
+    private static final int REQUEST_ADDPROGRAM = 0;
+
     //RecyclerView相关
     private SwipeRefreshLayout refreshLayout;
     private RecyclerView recyclerView;
@@ -42,20 +55,135 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private final int PAGE_COUNT = 10;
     private int lastVisibleItem = 0;
 
+    private AVQuery<AVObject> query = new AVQuery<>("ProjectInfo");
+
+    private ArrayAdapter<String> programAdapter;
+    List<String> projectList = new ArrayList<>();
+
+    @BindView(R.id.toolbar) Toolbar toolbar;
+    @BindView(R.id.programName) Spinner programSpinner;
+    @BindView(R.id.drawer_layout) DrawerLayout drawerLayout;
+    @BindView(R.id.nav_view) NavigationView navigationView;
+    //@BindView(R.id.user_mail) TextView user_mail;
+    //@BindView(R.id.user_name) TextView user_name;
+
+    //用户信息
     private String email,name,occupation,password;
+    //项目信息
+    private String programName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
-
+        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
+        //获取当前用户信息
         MyLeanCloudApp app = (MyLeanCloudApp)this.getApplication();
         email = app.getEmail();
         name = app.getUserName();
         occupation = app.getOccu();
         password = app.getPassword();
 
+
+        if(occupation.equals("Producer"))
+        {
+            setContentView(R.layout.activity_main);
+
+        }
+        else
+        {
+            setContentView(R.layout.activity_engineer);
+        }
+        ButterKnife.bind(this);
+
+        //TextView user_name = (TextView) LayoutInflater.from(MainActivity.this).inflate(R.layout.nav_header, null).findViewById(R.id.user_name);
+        View nav_header = navigationView.inflateHeaderView(R.layout.nav_header);
+        TextView user_name = nav_header.findViewById(R.id.user_name);
+        TextView user_mail = nav_header.findViewById(R.id.user_mail);
+        user_name.setText(name);
+        user_mail.setText(email);
+
+        //获取用户信息
+        toolbar.setNavigationIcon(R.mipmap.home);//设置导航栏图标
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
+
+        //toolbar.setLogo(R.mipmap.home);//设置app logo
+        //toolbar.setTitle(" "+name+" ");//设置主标题
+        //toolbar.setTitleTextColor(getResources().getColor(R.color.darkBlue));
+        //toolbar.setSubtitle(" "+occupation+" ");//设置子标题
+        //toolbar.setSubtitleTextColor(getResources().getColor(R.color.pinkDarkBlue));
+
+        toolbar.inflateMenu(R.menu.base_toolbar_menu);//设置右上角的填充菜单
+        //toolbar的按钮点击
+        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                int menuItemId = item.getItemId();
+                if (menuItemId == R.id.action_search) {
+                    Toast.makeText(MainActivity.this , " " , Toast.LENGTH_SHORT).show();
+
+                } else if (menuItemId == R.id.action_notification) {
+                    Toast.makeText(MainActivity.this, " ", Toast.LENGTH_SHORT).show();
+                }else if (menuItemId == R.id.action_add) {
+                    Intent intent = new Intent(getApplicationContext(), AddProgramActivity.class);
+                    startActivityForResult(intent, REQUEST_ADDPROGRAM);
+                }
+                return true;
+            }
+        });
+
+
+       //toolbar下拉项目选择
+
+        //String[] ctype = new String[]{"Program1", "Program2222", "Program3333333"};
+        //创建一个数组适配器
+        //programAdapter = new ArrayAdapter<String>(this, R.layout.spinner_text, ctype);
+        //programAdapter = new ArrayAdapter<String>(this, R.layout.spinner_text, projectList);
+        query.whereEqualTo("producer", email);
+        query.findInBackground().subscribe(new Observer<List<AVObject>>() {
+            public void onSubscribe(Disposable disposable) {}
+            public void onNext(List<AVObject> projectInfo) {
+                if(projectInfo.size()==0)
+                {
+                    projectList.add("You have no project!");
+                    refreshProject();
+                }
+                else
+                {
+                    for(int i = 0;i<projectInfo.size();i++)
+                    {
+                        projectList.add(projectInfo.get(i).getString("projectName"));
+                    }
+                    refreshProject();
+                }
+            }
+            public void onError(Throwable throwable) {}
+            public void onComplete() {}
+        });
+        //programAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);     //设置下拉列表框的下拉选项样式
+
+        //programSpinner.setAdapter(programAdapter);
+        //条目点击事件
+        programSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                programName = programAdapter.getItem(position);
+                Toast.makeText(MainActivity.this, programName, Toast.LENGTH_SHORT).show();
+                parent.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                parent.setVisibility(View.VISIBLE);
+            }
+        });
+
+        //切换背景颜色
         final int[] BGColor = {getResources().getColor(R.color.pinkDarkBlue),
                 getResources().getColor(R.color.pinkBlue),
                 getResources().getColor(R.color.pinkGreen),
@@ -74,6 +202,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         recyclerView.addItemDecoration( new DividerGridItemDecoration(this ));
 //设置增加或删除条目的动画
         recyclerView.setItemAnimator( new DefaultItemAnimator());*/
+
 
         final PagerSlidingTabStrip tabStrip = (PagerSlidingTabStrip) findViewById(R.id.tabs);
         // Initialize the ViewPager and set an adapter
@@ -104,6 +233,57 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         PagerSlidingTabStrip tabs = (PagerSlidingTabStrip) findViewById(R.id.tabs);
         tabs.setViewPager(pager);
         tabs.setOnPageChangeListener(mPageChangeListener);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_ADDPROGRAM) {
+            if (resultCode == RESULT_OK) {
+
+                projectList.add(data.getStringExtra("projectName"));
+
+            }
+        }
+    }
+
+    //todo
+    private void findProject()
+    {
+        projectList.clear();
+
+        //查询此邮箱是否有关联项目
+        if(occupation.equals("producer"))
+        {
+            query.whereEqualTo("producer", email);
+            query.findInBackground().subscribe(new Observer<List<AVObject>>() {
+                public void onSubscribe(Disposable disposable) {}
+                public void onNext(List<AVObject> projectInfo) {
+                    if(projectInfo.size()==0)
+                    {
+                        projectList.add("You have no project!");
+                        refreshProject();
+                    }
+                    else
+                    {
+                        for(int i = 0;i<projectInfo.size();i++)
+                        {
+                            projectList.add(projectInfo.get(i).getString("projectName"));
+                        }
+                        refreshProject();
+                    }
+                }
+                public void onError(Throwable throwable) {}
+                public void onComplete() {}
+            });
+        }
+    }
+    private void refreshProject()
+    {
+        programAdapter = new ArrayAdapter<String>(this, R.layout.spinner_text, projectList);
+        programAdapter.notifyDataSetChanged();
+        programAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);     //设置下拉列表框的下拉选项样式
+
+        programSpinner.setAdapter(programAdapter);
     }
 
     private void findView() {
