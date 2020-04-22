@@ -32,10 +32,14 @@ dependencies {
 
     implementation 'com.jpardogo.materialtabstrip:library:1.1.1'
 
+    //悬浮按钮
+    implementation 'com.laocaixw.suspendbuttonlayout:suspendbuttonlayout:1.0.3'
+
     implementation 'com.jakewharton:butterknife:8.0.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.0.1'
+
     implementation 'com.android.support:cardview-v7:28.0.0'
-    implementation 'com.android.support:recyclerview-v7:27.1.1'
+    implementation 'com.android.support:recyclerview-v7:28.0.0'
 
 
     //leancloud

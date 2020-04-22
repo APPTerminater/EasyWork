@@ -45,6 +45,7 @@
         <item
             android:icon="@drawable/banben"
             android:id="@+id/banben"
-            android:title="Update"/>
+            android:title="@string/log_out"
+            />
     </group>
 </menu>

@@ -2,6 +2,7 @@
     <string name="app_name">Easy Work</string>
 
     <string name="login">LOGIN</string>
+    <string name="log_out">Log Out</string>
     <string name="create_account">CREATE ACCOUNT</string>
 
     <string name="logo">LOGO</string>
@@ -12,8 +13,13 @@
     <string name="ask_not_have">No account yet? Create one</string>
     
     <string name="program_name">ProgramName</string>
-    <string name="member1">Member1 Name</string>
-    <string name="member2">Member2 Name</string>
-    <string name="member3">Member3 Name</string>
+    <string name="member1">Member1 Email</string>
+    <string name="member2">Member2 Email</string>
+    <string name="member3">Member3 Email</string>
     <string name="submit">SUBMIT</string>
+
+    <string name="task_name">TaskName</string>
+    <string name="task_member">The executer\'s email</string>
+    <string name="task_ddl">Double click to set deadline time</string>
+    <string name="task_subscribe">Content</string>
 </resources>

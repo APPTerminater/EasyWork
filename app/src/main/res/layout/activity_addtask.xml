@@ -12,42 +12,54 @@
         android:paddingLeft="24dp"
         android:paddingRight="24dp">
 
-        <!-- Email Label -->
+        <TextView
+            android:id="@+id/projectName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:gravity="center"
+            android:text="123"
+            android:textSize="18sp"
+            />
 
-        <EditText android:id="@+id/programName"
+        <!-- TaskName Label -->
+
+        <EditText android:id="@+id/taskName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
-            android:hint="@string/program_name"
+            android:hint="@string/task_name"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"/>
 
 
         <!-- Password Label -->
 
-        <EditText android:id="@+id/member1"
+        <EditText android:id="@+id/taskMember"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textEmailAddress"
-            android:hint="@string/member1"
+            android:hint="@string/task_member"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
             />
 
-        <EditText android:id="@+id/member2"
+        <EditText android:id="@+id/taskDDL"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="textEmailAddress"
-            android:hint="@string/member2"
+            android:inputType="date"
+            android:hint="@string/task_ddl"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
             />
 
-        <EditText android:id="@+id/member3"
+        <EditText android:id="@+id/Subscribe"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="textEmailAddress"
-            android:hint="@string/member3"
+            android:maxLines="5"
+            android:inputType="textMultiLine"
+            android:hint="@string/task_subscribe"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
             />
@@ -60,6 +72,7 @@
             android:layout_marginBottom="24dp"
             android:padding="12dp"
             android:text="@string/submit"/>
+
 
     </LinearLayout>
 </ScrollView>

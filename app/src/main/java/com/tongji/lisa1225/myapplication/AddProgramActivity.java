@@ -1,6 +1,8 @@
 package com.tongji.lisa1225.myapplication;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -34,8 +36,13 @@ public class AddProgramActivity extends AppCompatActivity {
 
     private AVObject testObject = new AVObject("ProjectInfo");
     private AVQuery<AVObject> query = new AVQuery<>("ProjectInfo");
+    private AVQuery<AVObject> queryUser = new AVQuery<>("UserInfo");
+
+    AlertDialog dialog = null;
+
     private String email,name,occupation,password;
     private String projectName,member1,member2,member3;
+    private String email1,email2,email3;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -55,6 +62,10 @@ public class AddProgramActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
+                projectName = _programNameText.getText().toString();
+                email1 = _memberText1.getText().toString();
+                email2 = _memberText2.getText().toString();
+                email3 = _memberText3.getText().toString();
                 submit();
             }
         });
@@ -67,7 +78,6 @@ public class AddProgramActivity extends AppCompatActivity {
             onSubmitFailed();
             return;
         }
-
         _submitButton.setEnabled(false);
 
         final ProgressDialog progressDialog = new ProgressDialog(AddProgramActivity.this,
@@ -76,50 +86,17 @@ public class AddProgramActivity extends AppCompatActivity {
         progressDialog.setMessage("Authenticating...");
         progressDialog.show();
 
-        projectName = _programNameText.getText().toString();
-        member1 = _memberText1.getText().toString();
-        member2 = _memberText2.getText().toString();
-        member3 = _memberText3.getText().toString();
 
         new android.os.Handler().postDelayed(
                 new Runnable() {
                     public void run() {
                         // 判断输入的账号密码是否正确
                         //todo
-                        queryProjectName(projectName,member1,member2,member3);
+                        checkEmail1();
                         // On complete call either onLoginSuccess or onLoginFailed
                         progressDialog.dismiss();
                     }
                 }, 1000);
-    }
-
-    @Override
-    public void onBackPressed() {
-        // disable going back to the MainActivity
-        moveTaskToBack(true);
-    }
-
-    //成功添加项目
-    public void onSubmitSuccess() {
-        _submitButton.setEnabled(true);
-        //返回项目界面
-        Intent intent = new Intent();
-        intent.putExtra("projectName", projectName);
-        setResult(RESULT_OK, intent);
-        finish();
-
-        // finish();
-    }
-
-    public void onSubmitFailed() {
-        Toast.makeText(getBaseContext(), "Add project error!", Toast.LENGTH_LONG).show();
-        _submitButton.setEnabled(true);
-    }
-
-    public void onDuplicateProject() {
-        Toast.makeText(getBaseContext(), "This project name has been existed!", Toast.LENGTH_LONG).show();
-
-        _submitButton.setEnabled(true);
     }
 
     public boolean validate() {
@@ -148,12 +125,18 @@ public class AddProgramActivity extends AppCompatActivity {
             if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                 _memberText3.setError("enter a valid email address");
                 valid = false;
-            } else {
+            }
+            else if(email2.isEmpty())
+            {
+                _memberText3.setError("Please input email in order!");
+                valid = false;
+            }
+            else {
                 _memberText3.setError(null);
             }
         }
 
-        if (projectName.isEmpty() || password.length() < 4 || password.length() > 10) {
+        if (projectName.isEmpty() || projectName.length() < 4 || projectName.length() > 10) {
             _programNameText.setError("between 4 and 10 alphanumeric characters");
             valid = false;
         } else {
@@ -161,6 +144,151 @@ public class AddProgramActivity extends AppCompatActivity {
         }
 
         return valid;
+    }
+
+    private void checkEmail1()
+    {
+        queryUser.whereEqualTo("email", email1);
+        queryUser.findInBackground().subscribe(new Observer<List<AVObject>>() {
+            public void onSubscribe(Disposable disposable) {}
+            public void onNext(List<AVObject> UserInfo) {
+                if(UserInfo.size()==1)
+                {
+                    member1 = UserInfo.get(0).getString("name");
+                    if(!email2.isEmpty())
+                    {
+                        checkEmail2();
+                    }
+                    else
+                    {
+                        showDialog();
+                    }
+                }
+                else
+                {
+                    onNoUser(email1);
+                }
+            }
+            public void onError(Throwable throwable) {}
+            public void onComplete() {}
+        });
+    }
+
+    private void checkEmail2()
+    {
+        queryUser.whereEqualTo("email", email2);
+        queryUser.findInBackground().subscribe(new Observer<List<AVObject>>() {
+            public void onSubscribe(Disposable disposable) {}
+            public void onNext(List<AVObject> UserInfo) {
+                if(UserInfo.size()==1)
+                {
+                    member2 = UserInfo.get(0).getString("name");
+                    if(!email3.isEmpty())
+                    {
+                        checkEmail3();
+                    }
+                    else
+                    {
+                        showDialog();
+                    }
+                }
+                else
+                {
+                    onNoUser(email2);
+                }
+            }
+            public void onError(Throwable throwable) {}
+            public void onComplete() {}
+        });
+    }
+
+    private void checkEmail3()
+    {
+        queryUser.whereEqualTo("email", email3);
+        queryUser.findInBackground().subscribe(new Observer<List<AVObject>>() {
+            public void onSubscribe(Disposable disposable) {}
+            public void onNext(List<AVObject> UserInfo) {
+                if(UserInfo.size()==1)
+                {
+                    member3 = UserInfo.get(0).getString("name");
+                    showDialog();
+                }
+                else
+                {
+                    onNoUser(email3);
+                }
+            }
+            public void onError(Throwable throwable) {}
+            public void onComplete() {}
+        });
+    }
+
+    private void onNoUser(String email)
+    {
+        Toast.makeText(getBaseContext(), "No user uses email:"+email, Toast.LENGTH_LONG).show();
+        _submitButton.setEnabled(true);
+    }
+
+    //todo:https://blog.csdn.net/weixin_34194551/article/details/94238275
+    private void showDialog(){
+        if(dialog == null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            //builder.setIcon(R.drawable.picture);
+            builder.setTitle("Are you sure to add this Program?");
+            builder.setMessage("Program Name: " + projectName + "\n"
+                    + "Producer: " + name + "\n"
+                    + "Member1:" + member1 + "\n"
+                    + "Member2:" + member2 + "\n"
+                    + "Member3:" + member3);
+            builder.setPositiveButton("Yes",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            queryProjectName(projectName, email1, email2, email3);
+                            _submitButton.setEnabled(true);
+                        }
+                    });
+            builder.setNegativeButton("No",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            _submitButton.setEnabled(true);
+                        }
+                    });
+            dialog = builder.create();
+        }
+        dialog.show();
+
+    }
+
+
+    /*@Override
+    public void onBackPressed() {
+        // disable going back to the MainActivity
+        moveTaskToBack(true);
+    }*/
+
+    //成功添加项目
+    private void onSubmitSuccess() {
+        _submitButton.setEnabled(true);
+        //返回项目界面
+        Intent intent = new Intent();
+        intent.putExtra("projectName", projectName);
+        setResult(RESULT_OK, intent);
+        finish();
+
+        // finish();
+    }
+
+    private void onSubmitFailed() {
+        Toast.makeText(getBaseContext(), "Add project error!", Toast.LENGTH_LONG).show();
+        _submitButton.setEnabled(true);
+    }
+
+    public void onDuplicateProject() {
+        Toast.makeText(getBaseContext(), "This project name has been existed!", Toast.LENGTH_LONG).show();
+
+        _submitButton.setEnabled(true);
     }
 
     //查询此项目是否已经登记过，若没有则进行登记
