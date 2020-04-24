@@ -6,8 +6,13 @@
     <color name="white">#ffffff</color>
     <color name="pinkYellow">#ffe2a0</color>
     <color name="pinkGreen">#c9ffa0</color>
+    <color name="pinkDarkGreen">#aae97b</color>
     <color name="pinkBlue">#a0ecff</color>
     <color name="pinkDarkBlue">#a0c0ff</color>
     <color name="pinkRed">#ffa0a0</color>
+    <color name="pinkDarkRed">#f37493</color>
+    <color name="pinkPurple">#d7a0ff</color>
+    <color name="pinkDarkPurple">#cd90f9</color>
     <color name="darkBlue">#7199e4</color>
+    <color name="grey">#cfcfce</color>
 </resources>

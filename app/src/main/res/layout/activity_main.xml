@@ -61,8 +61,8 @@
         suspend:imageMainOpen="@mipmap/suspend_main_open"
         suspend:imageMainClose="@mipmap/suspend_main_close"
         suspend:image1="@mipmap/add_task"
-        suspend:image2="@mipmap/suspend_2"
-        suspend:image3="@mipmap/suspend_3"
+        suspend:image2="@mipmap/delete_task"
+        suspend:image3="@mipmap/edit_task"
         suspend:image4="@mipmap/suspend_4"
         suspend:image5="@mipmap/suspend_5"
         suspend:image6="@mipmap/suspend_6">
@@ -74,6 +74,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        app:menu="@menu/nav_menu" />
+        app:menu="@menu/nav_menu"
+        android:background="@color/colorPrimary"/>
 
 </android.support.v4.widget.DrawerLayout>

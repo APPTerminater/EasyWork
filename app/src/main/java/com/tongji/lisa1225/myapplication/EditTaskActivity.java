@@ -29,8 +29,8 @@ import cn.leancloud.AVQuery;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 
-public class AddTaskActivity extends AppCompatActivity {
-    private static final String TAG = "AddTaskActivity";
+public class EditTaskActivity extends AppCompatActivity {
+    private static final String TAG = "EditTaskActivity";
 
     private String pattern = "yyyy-MM-dd";
     //选择任务类型的下拉框
@@ -44,7 +44,8 @@ public class AddTaskActivity extends AppCompatActivity {
     @BindView(R.id.taskDDL) EditText etDDL;
     @BindView(R.id.Subscribe) EditText etContent;
     @BindView(R.id.btn_submit) Button _submitButton;
-    private String projectName,taskType,taskName,taskMemberEmail,taskDDL,taskContent;
+    private String projectName,taskType,taskName,taskMemberEmail,taskDDL,taskContent,taskID;
+    private String taskOriName;
 
     private AVObject testObject = new AVObject("TaskInfo");
     private AVQuery<AVObject> taskQuery = new AVQuery<>("TaskInfo");
@@ -59,11 +60,14 @@ public class AddTaskActivity extends AppCompatActivity {
         //设置项目名称文字
         projectName = intent.getStringExtra("projectName");
         tvProject.setText(projectName);
+        //获取任务id
+        taskID = intent.getStringExtra("id");
 
         //设置任务类型的下拉框
         adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, ctype);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);     //设置下拉列表框的下拉选项样式
         spType.setAdapter(adapter);
+        //todo:spType.setSelection(2);
         spType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {//条目点击事件
 
             @Override
@@ -85,7 +89,7 @@ public class AddTaskActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //显示弹窗
-                DatePickerDialog dialog = new DatePickerDialog(AddTaskActivity.this, new DatePickerDialog.OnDateSetListener() {
+                DatePickerDialog dialog = new DatePickerDialog(EditTaskActivity.this, new DatePickerDialog.OnDateSetListener() {
                     @Override
                     public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
                         c.set(year, monthOfYear, dayOfMonth);
@@ -109,6 +113,27 @@ public class AddTaskActivity extends AppCompatActivity {
             }
         });
 
+        //设置默认值
+        AVQuery<AVObject> query = new AVQuery<>("TaskInfo");
+        query.getInBackground(taskID).subscribe(new Observer<AVObject>() {
+            public void onSubscribe(Disposable disposable) {}
+            public void onNext(AVObject todo) {
+                for(int i = 0;i<ctype.length;i++)
+                {
+                    if(ctype[i].equals(todo.getString("type")))
+                    {
+                        spType.setSelection(i);
+                    }
+                }
+                taskOriName = todo.getString("taskName");
+                etName.setText(taskOriName);
+                etDDL.setText(todo.getString("ddl"));
+                etMember.setText(todo.getString("member"));
+                etContent.setText(todo.getString("content"));
+            }
+            public void onError(Throwable throwable) {}
+            public void onComplete() {}
+        });
     }
 
     public void submit() {
@@ -120,7 +145,7 @@ public class AddTaskActivity extends AppCompatActivity {
         }
         //_submitButton.setEnabled(false);
 
-        final ProgressDialog progressDialog = new ProgressDialog(AddTaskActivity.this,
+        final ProgressDialog progressDialog = new ProgressDialog(EditTaskActivity.this,
                 R.style.Theme_AppCompat_Dialog);
         progressDialog.setIndeterminate(true);
         progressDialog.setMessage("Authenticating...");
@@ -169,26 +194,35 @@ public class AddTaskActivity extends AppCompatActivity {
     // 判断输入的任务名在项目中是否有重复
     private void isNameDuplicate()
     {
-        taskQuery.whereEqualTo("taskName", taskName);
-        taskQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
-            public void onSubscribe(Disposable disposable) {}
-            public void onNext(List<AVObject> TaskInfo) {
-                if(TaskInfo.size() != 0)
-                {
-                    for (int i = 0;i < TaskInfo.size();i++)
-                    {
-                        if(projectName.equals(TaskInfo.get(i).getString("projectName")))
-                        {
-                            onDuplicateName();
-                            return;
+        if(taskName.equals(taskOriName))
+        {
+            isMemberInProject();
+        }
+        else {
+            taskQuery.whereEqualTo("taskName", taskName);
+            taskQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
+                public void onSubscribe(Disposable disposable) {
+                }
+
+                public void onNext(List<AVObject> TaskInfo) {
+                    if (TaskInfo.size() != 0) {
+                        for (int i = 0; i < TaskInfo.size(); i++) {
+                            if (projectName.equals(TaskInfo.get(i).getString("projectName"))) {
+                                onDuplicateName();
+                                return;
+                            }
                         }
                     }
+                    isMemberInProject();
                 }
-                isMemberInProject();
-            }
-            public void onError(Throwable throwable) {}
-            public void onComplete() {}
-        });
+
+                public void onError(Throwable throwable) {
+                }
+
+                public void onComplete() {
+                }
+            });
+        }
     }
     // 判断完成的成员是否在项目中
     private void isMemberInProject()
@@ -201,7 +235,7 @@ public class AddTaskActivity extends AppCompatActivity {
                         ||taskMemberEmail.equals(ProjectInfo.get(0).getString("member2"))
                         ||taskMemberEmail.equals(ProjectInfo.get(0).getString("member3")))
                 {
-                    addProject();
+                    editProject();
                 }
                 else
                 {
@@ -214,18 +248,15 @@ public class AddTaskActivity extends AppCompatActivity {
         });
     }
 
-    public void addProject()
+    public void editProject()
     {
+        AVObject testObject = AVObject.createWithoutData("TaskInfo", taskID);
         testObject.put("projectName", projectName);
         testObject.put("type",taskType);
         testObject.put("taskName",taskName);
         testObject.put("member", taskMemberEmail);
         testObject.put("ddl",taskDDL);
         testObject.put("content",taskContent);
-        testObject.put("finished",false);//任务是否完成
-        testObject.put("deleted",false);
-
-        // 将对象保存到云端
         testObject.saveInBackground().subscribe(new Observer<AVObject>() {
             public void onSubscribe(Disposable disposable) {}
             public void onNext(AVObject todo) {
@@ -249,7 +280,7 @@ public class AddTaskActivity extends AppCompatActivity {
     }
     //添加失败
     private void onSubmitFailed() {
-        Toast.makeText(getBaseContext(), "Add task error!", Toast.LENGTH_LONG).show();
+        Toast.makeText(getBaseContext(), "Edit task error!", Toast.LENGTH_LONG).show();
         _submitButton.setEnabled(true);
     }
     //项目中已有这个任务名了
@@ -267,3 +298,4 @@ public class AddTaskActivity extends AppCompatActivity {
 
 
 }
+

@@ -262,11 +262,12 @@ public class AddProgramActivity extends AppCompatActivity {
     }
 
 
-    /*@Override
+    @Override
     public void onBackPressed() {
         // disable going back to the MainActivity
-        moveTaskToBack(true);
-    }*/
+        finish();
+        //moveTaskToBack(true);
+    }
 
     //成功添加项目
     private void onSubmitSuccess() {

@@ -2,10 +2,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <group android:checkableBehavior="single"
         android:id="@+id/group1">
-        <item
-            android:id="@+id/nav_guardian"
-            android:icon="@drawable/nav_guardian"
-            android:title="Guardian" />
 
         <item
             android:id="@+id/tuling"
@@ -13,9 +9,13 @@
             android:title="Chat" />
 
         <item
-            android:id="@+id/nav_favorites"
+            android:id="@+id/nav_edit"
             android:icon="@drawable/nav_favorites"
-            android:title="Favorites" />
+            android:title="Edit Project" />
+        <item
+            android:id="@+id/nav_bin"
+            android:icon="@drawable/nav_bin"
+            android:title="Bin" />
         <item
             android:id="@+id/weather"
             android:icon="@drawable/weather"
@@ -44,7 +44,7 @@
 
         <item
             android:icon="@drawable/banben"
-            android:id="@+id/banben"
+            android:id="@+id/logout"
             android:title="@string/log_out"
             />
     </group>

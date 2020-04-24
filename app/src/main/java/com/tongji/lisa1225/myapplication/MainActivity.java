@@ -3,11 +3,14 @@ package com.tongji.lisa1225.myapplication;
 import com.laocaixw.layout.SuspendButtonLayout;
 import com.tongji.lisa1225.myapplication.Adapter.MainRVAdapter;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -21,11 +24,16 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,7 +50,7 @@ import com.astuetz.PagerSlidingTabStrip;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener{
+public class MainActivity extends AppCompatActivity{
     private static final String TAG = "MainActivity";
     private static final int REQUEST_ADDPROGRAM = 0;
     private static final int REQUEST_ADDTASK = 1;
@@ -50,25 +58,23 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private static final String NO_PROGRAM = "You have no project!";
     private static final String NO_TASK = "You have no task!";
 
-    final int BGColorNum = 5;
-    //RecyclerView相关
-    private SwipeRefreshLayout refreshLayout;
-    private RecyclerView recyclerView;
-    private MainRVAdapter rvAdapter;
-    private GridLayoutManager mLayoutManager;
-    private Handler mHandler = new Handler(Looper.getMainLooper());
-    private final int PAGE_COUNT = 10;
-    private int lastVisibleItem = 0;
+    static final int BGColorNum = 5;
+    static int[] BGColor = new int[BGColorNum];
+
 
     private AVQuery<AVObject> projectQuery = new AVQuery<>("ProjectInfo");
     private AVQuery<AVObject> taskQuery = new AVQuery<>("TaskInfo");
+    private AVQuery<AVObject> currentTaskQuery = new AVQuery<>("TaskInfo");
     //下拉框
     private ArrayAdapter<String> programAdapter;
     List<String> projectList = new ArrayList<>();
-    List<String> taskList = new ArrayList<>();
+    static List<String> taskList = new ArrayList<>();
+    static List<AVObject> taskTotalInfo = new ArrayList<>();
+    static int currentPosition;//目前任务卡是第几个
+    AlertDialog deleteTaskialog = null;
 
     //悬浮按钮
-    public String[] suspendChildButtonInfo = {"相机", "音乐", "地图", "亮度", "联系人", "短信"};
+    public String[] suspendChildButtonInfo = {"Add Task", "Delete Task", "EditTask", "亮度", "联系人", "短信"};
 
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.programName) Spinner programSpinner;
@@ -95,26 +101,17 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         occupation = app.getOccu();
         password = app.getPassword();
 
-        if(occupation.equals("Producer"))
-        {
-            setContentView(R.layout.activity_main);
-
-        }
-        else
-        {
-            setContentView(R.layout.activity_engineer);
-        }
+        setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
         //切换背景颜色
-        final int[] BGColor = {getResources().getColor(R.color.pinkDarkBlue),
-                getResources().getColor(R.color.pinkBlue),
-                getResources().getColor(R.color.pinkGreen),
-                getResources().getColor(R.color.pinkYellow),
-                getResources().getColor(R.color.pinkRed)};
+        BGColor[0] = getResources().getColor(R.color.pinkDarkBlue);
+        BGColor[1] = getResources().getColor(R.color.pinkBlue);
+        BGColor[2] = getResources().getColor(R.color.pinkGreen);
+        BGColor[3] = getResources().getColor(R.color.pinkYellow);
+        BGColor[4] = getResources().getColor(R.color.pinkRed);
 
-
-        //获取用户信息
+        //侧边栏头部获取用户信息
         View nav_header = navigationView.inflateHeaderView(R.layout.nav_header);
         TextView user_name = nav_header.findViewById(R.id.user_name);
         TextView user_mail = nav_header.findViewById(R.id.user_mail);
@@ -122,8 +119,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         user_name.setText(name);
         user_mail.setText(email);
         user_occu.setText(occupation);
-
-        navigationView.setItemBackgroundResource(R.color.pinkGreen);
+        //侧边栏按钮
+        navigationView.setItemBackgroundResource(R.color.grey);
         //navigationView.setCheckedItem(R.id.nav_guardian);
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener()
         {
@@ -133,7 +130,13 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 //各种操作
                 switch (item.getItemId())
                 {
-                    case R.id.nav_guardian:
+                    case R.id.nav_edit:
+                        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                        startActivity(intent);
+                        //Intent favorites = new Intent(MainActivity.this, LoveActivity.class);
+                        //startActivity(favorites);
+                        break;
+                    case R.id.nav_bin:
                         //Intent guardian = new Intent(MainActivity.this, GuardianActivity.class);
                         //startActivity(guardian);
                         break;
@@ -157,10 +160,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                         //Intent weather = new Intent(MainActivity.this,WeatherActivity.class);
                         //startActivity(weather);
                         break;
-                    case R.id.nav_favorites:
-                        //Intent favorites = new Intent(MainActivity.this, LoveActivity.class);
-                        //startActivity(favorites);
-                        break;
                     case R.id.nav_news:
                         //Intent news = new Intent(MainActivity.this, NewsActivity.class);
                         //startActivity(news);
@@ -173,10 +172,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                         //Intent about = new Intent(MainActivity.this, AboutActivity.class);
                         //startActivity(about);
                         break;
-                    case R.id.banben:
+                    case R.id.logout:
                         //Toasty.info(MainActivity.this, "你觉得可能有新版本吗", Toast.LENGTH_SHORT, true).show();
-                        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-                        startActivity(intent);
+                        Intent loginIntent = new Intent(MainActivity.this, LoginActivity.class);
+                        startActivity(loginIntent);
                         break;
                     default:
                 }
@@ -254,7 +253,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 projectName = programAdapter.getItem(position);
                 Toast.makeText(MainActivity.this, projectName, Toast.LENGTH_SHORT).show();
                 parent.setVisibility(View.VISIBLE);
-                showTask(BGColor);
+                showTask();
             }
 
             @Override
@@ -273,9 +272,40 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
             @Override
             public void onChildButtonClick(int index) {
-                Intent intent = new Intent(getApplicationContext(), AddTaskActivity.class);
-                intent.putExtra("projectName", projectName);
-                startActivityForResult(intent, REQUEST_ADDTASK);
+                switch (index)
+                {
+                    case 1:
+                        Intent addIntent = new Intent(getApplicationContext(), AddTaskActivity.class);
+                        addIntent.putExtra("projectName", projectName);
+                        startActivity(addIntent);
+                        break;
+                    case 2:
+                        if(!taskTotalInfo.isEmpty())
+                        {
+                            showDeleteTaskDialog();
+                            //deleteTask();
+                        }
+                        else
+                        {
+                            Toast.makeText(MainActivity.this, "There is no task in this project!", Toast.LENGTH_SHORT).show();
+                        }
+                        break;
+                    case 3:
+                        if(!taskTotalInfo.isEmpty())
+                        {
+                            Intent editIntent = new Intent(getApplicationContext(), EditTaskActivity.class);
+                            editIntent.putExtra("projectName", projectName);
+                            editIntent.putExtra("id", taskTotalInfo.get(currentPosition).getObjectId());
+                            startActivity(editIntent);
+                        }
+                        else
+                        {
+                            Toast.makeText(MainActivity.this, "There is no task in this project!", Toast.LENGTH_SHORT).show();
+                        }
+                    default:
+                        break;
+                }
+
 
                 Toast.makeText(MainActivity.this, "您点击了【"
                         + suspendChildButtonInfo[index - 1] + "】按钮！", Toast.LENGTH_SHORT).show();
@@ -283,31 +313,19 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         });
         suspendButtonLayout.setPosition(true, 100);
 
-
-               /* LinearLayoutManager layoutManager = new LinearLayoutManager(this );
-                //设置布局管理器
-                recyclerView.setLayoutManager(layoutManager);
-                //设置为垂直布局，这也是默认的
-                layoutManager.setOrientation(OrientationHelper. VERTICAL);
-                //设置Adapter
-                recyclerView.setAdapter(recycleAdapter);
-                //设置分隔线
-                recyclerView.addItemDecoration( new DividerGridItemDecoration(this ));
-                //设置增加或删除条目的动画
-                recyclerView.setItemAnimator( new DefaultItemAnimator());*/
-        //final PagerSlidingTabStrip tabStrip = (PagerSlidingTabStrip) findViewById(R.id.tabs);
-        // Initialize the ViewPager and set an adapter
-        //final ViewPager pager = (ViewPager) findViewById(R.id.pager);
-
     }
 
-    private void showTask(final int[] BGColor)
+    private void showTask()
     {
         //显示任务
         taskQuery.whereEqualTo("projectName", projectName);
+        taskQuery.whereEqualTo("finished", false);
+        taskQuery.whereEqualTo("deleted", false);
+        taskQuery.orderByAscending("ddl");
         taskQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
             public void onSubscribe(Disposable disposable) {}
             public void onNext(List<AVObject> taskInfo) {
+                taskTotalInfo = taskInfo;
                 int initsize = taskList.size();
                 if(taskInfo.size()==0)
                 {
@@ -319,18 +337,17 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     {
                         taskList.add(taskInfo.get(i).getString("taskName"));
                     }
-
                 }
                 taskList = taskList.subList(initsize,taskList.size());
                 myPagerAdapter = new MyPagerAdapter(getSupportFragmentManager());
-                setPaperAdapter(BGColor);
+                setPaperAdapter();
             }
             public void onError(Throwable throwable) {}
             public void onComplete() {}
         });
     }
 
-    private void setPaperAdapter(final int[] BGColor)
+    private void setPaperAdapter()
     {
         pager.setAdapter(myPagerAdapter);
         myPagerAdapter.notifyDataSetChanged();
@@ -340,6 +357,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             public void onPageScrolled(int i, float v, int i1) {
                 pager.setBackgroundColor(BGColor[i % BGColorNum]);
                 tabStrip.setBackgroundColor(BGColor[i % BGColorNum]);
+                currentPosition = i;
             }
 
             @Override
@@ -372,13 +390,12 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         }
         else if(requestCode == REQUEST_ADDTASK){
             if (resultCode == RESULT_OK) {
-                taskList.add(data.getStringExtra("taskName"));
+                //taskList.add(data.getStringExtra("taskName"));
                 //todo
-
+                showTask();
             }
         }
     }
-
 
     private void refreshProject()
     {
@@ -389,111 +406,54 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         programSpinner.setAdapter(programAdapter);
     }
 
-    private void findView() {
-        refreshLayout = (SwipeRefreshLayout) findViewById(R.id.refreshLayout);
-        recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+    private void showDeleteTaskDialog(){
+        if(deleteTaskialog == null) {
+            AlertDialog.Builder deleteTaskBuilder = new AlertDialog.Builder(this);
+            //deleteTaskBuilder.setIcon(R.drawable.picture);
+            deleteTaskBuilder.setTitle("Are you sure to delete this Task?");
+            deleteTaskBuilder.setPositiveButton("Yes",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            deleteTask();
+                        }
+                    });
+            deleteTaskBuilder.setNegativeButton("No",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
 
-    }
-
-    private void initRefreshLayout() {
-        refreshLayout.setColorSchemeResources(android.R.color.holo_blue_light, android.R.color.holo_red_light,
-                android.R.color.holo_orange_light, android.R.color.holo_green_light);
-        refreshLayout.setOnRefreshListener(this);
-    }
-    private void initRecyclerView() {
-        rvAdapter = new MainRVAdapter(1, this, false );
-
-        //rvAdapter = new MainRVAdapter(getDatas(0, PAGE_COUNT), this, getDatas(0, PAGE_COUNT).size() > 0 );
-        rvAdapter.setOnItemClickListener(new MainRVAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(View view, int position) {
-                //tripInfoList.get(postion)
-               /* Toast.makeText(MainActivity.this,"onItemClick : " + String.valueOf(position), Toast.LENGTH_SHORT).show();
-                Intent commentIntent=new Intent(MainActivity.this,CommentActivity.class);
-                commentIntent.putExtra("nickname",nickname);
-                commentIntent.putExtra("position",position);
-                startActivity(commentIntent);*/
-
-            }
-        });
-
-        mLayoutManager = new GridLayoutManager(this, 1);
-        recyclerView.setLayoutManager(mLayoutManager);
-        recyclerView.setAdapter(rvAdapter);
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
-
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    if (!rvAdapter.isFadeTips() && lastVisibleItem + 1 == rvAdapter.getItemCount()) {
-                        mHandler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                //updateRecyclerView(rvAdapter.getRealLastPosition(), adapter.getRealLastPosition() + PAGE_COUNT);
-                            }
-                        }, 500);
-                    }
-
-                    if (rvAdapter.isFadeTips() && lastVisibleItem + 2 == rvAdapter.getItemCount()) {
-                        mHandler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                //updateRecyclerView(adapter.getRealLastPosition(), adapter.getRealLastPosition() + PAGE_COUNT);
-                            }
-                        }, 500);
-                    }
-                }
-            }
-
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                lastVisibleItem = mLayoutManager.findLastVisibleItemPosition();
-            }
-        });
-    }
-
-   /* private List<TripInfo> getDatas(final int firstIndex, final int lastIndex) {
-        List<TripInfo> resList = new ArrayList<>();
-        for (int i = firstIndex; i < lastIndex; i++) {
-            if (i < tripInfoList.size()) {
-                resList.add(tripInfoList.get(i));
-            }
+                        }
+                    });
+            deleteTaskialog = deleteTaskBuilder.create();
         }
-        return resList;
-    }*/
-
-    private void updateRecyclerView(int fromIndex, int toIndex) {
-       /* List<TripInfo> newDatas = getDatas(fromIndex, toIndex);
-        if (newDatas.size() > 0) {
-            rvAdapter.updateList(newDatas, true);
-        } else {
-            rvAdapter.updateList(null, false);
-        }*/
+        deleteTaskialog.show();
     }
 
-    @Override
-    public void onRefresh() {
-        refreshLayout.setRefreshing(true);
-        rvAdapter.resetDatas();
-        updateRecyclerView(0, PAGE_COUNT);
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                refreshLayout.setRefreshing(false);
+    private void deleteTask()
+    {
+        AVObject del = AVObject.createWithoutData("TaskInfo", taskTotalInfo.get(currentPosition).getObjectId());
+        del.put("deleted", true);
+        del.saveInBackground().subscribe(new Observer<AVObject>() {
+            public void onSubscribe(Disposable disposable) {}
+            public void onNext(AVObject todo) {
+                // 成功保存之后，执行其他逻辑
+                showTask();
             }
-        }, 1000);
+            public void onError(Throwable throwable) {
+                // 异常处理
+
+            }
+            public void onComplete() {}
+        });
+
     }
+
 
     public class MyPagerAdapter extends FragmentPagerAdapter {
 
-        private final String[] TITLES = {name, "Home", "Top Paid", "Top Free", "Top Grossing", "Top New Paid",
-                "Top New Free", "Trending"};
-        private
 
-        MyPagerAdapter(FragmentManager fm) {
+        private MyPagerAdapter(FragmentManager fm) {
             super(fm);
         }
 
@@ -525,4 +485,63 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             return SuperAwesomeCardFragment.newInstance(position);
         }
     }
+    static public class SuperAwesomeCardFragment extends Fragment {
+        private static final String ARG_POSITION = "position";
+
+        @BindView(R.id.taskType) TextView tvType;
+        @BindView(R.id.taskDDL) TextView tvDDL;
+        @BindView(R.id.taskContent) TextView tvContent;
+        @BindView(R.id.id_checkbox) CheckBox checkBox;
+
+        private int position;
+
+        public static SuperAwesomeCardFragment newInstance(int position) {
+            SuperAwesomeCardFragment f = new SuperAwesomeCardFragment();
+            Bundle b = new Bundle();
+            b.putInt(ARG_POSITION, position);
+            f.setArguments(b);
+            return f;
+        }
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            position = getArguments().getInt(ARG_POSITION);
+            Log.d(TAG,String.valueOf(position));
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_card,container,false);
+            ButterKnife.bind(this, rootView);
+            ViewCompat.setElevation(rootView, 50);
+            if(!taskTotalInfo.isEmpty())
+            {
+                tvType.setTextColor(BGColor[position%BGColorNum]);
+                tvType.setText(taskTotalInfo.get(position).getString("type"));
+                tvDDL.setText("Finish it before:"+taskTotalInfo.get(position).getString("ddl"));
+                tvContent.setText("Task Describition:\n"+taskTotalInfo.get(position).getString("content"));
+            }
+
+            checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+                @Override
+                public void onCheckedChanged(CompoundButton arg0, boolean arg1) {
+                    // TODO Auto-generated method stub
+                    if(checkBox.isChecked())
+                    {
+
+                    }
+                }
+            });
+            return rootView;
+        }
+
+        @Override
+        public void onPause()
+        {
+            super.onPause();
+
+        }
+    }
+
 }
