@@ -44,29 +44,10 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:background="@color/pinkDarkBlue"
-            tools:context=".MainActivity"/>
-
-
+            tools:context=".BinActivity"/>
 
 
     </LinearLayout>
-    <com.laocaixw.layout.SuspendButtonLayout
-        android:id="@+id/layout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        suspend:distance="80dp"
-        suspend:imageSize="50dp"
-        suspend:marginY="100dp"
-        suspend:number="6"
-        suspend:imageMainOpen="@mipmap/suspend_main_open"
-        suspend:imageMainClose="@mipmap/suspend_main_close"
-        suspend:image1="@mipmap/add_task"
-        suspend:image2="@mipmap/delete_task"
-        suspend:image3="@mipmap/edit_task"
-        suspend:image4="@mipmap/suspend_4"
-        suspend:image5="@mipmap/suspend_5"
-        suspend:image6="@mipmap/suspend_6">
-    </com.laocaixw.layout.SuspendButtonLayout>
 
     <!--滑动菜单界面-->
     <android.support.design.widget.NavigationView
@@ -74,7 +55,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        app:menu="@menu/producer_base_nav_menu"
+        app:menu="@menu/producer_bin_nav_menu2"
         android:background="@color/colorPrimary"/>
 
 </android.support.v4.widget.DrawerLayout>

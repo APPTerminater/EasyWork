@@ -14,12 +14,22 @@
     
     <string name="program_name">ProgramName</string>
     <string name="member1">Member1 Email</string>
-    <string name="member2">Member2 Email</string>
-    <string name="member3">Member3 Email</string>
+    <string name="member2">Member2 Email(Optional)</string>
+    <string name="member3">Member3 Email(Optional)</string>
     <string name="submit">SUBMIT</string>
 
     <string name="task_name">TaskName</string>
     <string name="task_member">The executer\'s email</string>
     <string name="task_ddl">Double click to set deadline time</string>
     <string name="task_subscribe">Content</string>
+    <string name="task_type">Task Type</string>
+    <string name="task_finish">Finish</string>
+
+    <!--菜单界面-->
+    <string name="home">Home</string>
+    <string name="doing">&#160;&#160;&#160;&#160;&#160;Doing</string>
+    <string name="finished">&#160;&#160;&#160;&#160;&#160;Finished</string>
+    <string name="bin">Bin</string>
+    <string name="edit_pro">Edit Project</string>
+    <string name="detail">Project Detail</string>
 </resources>

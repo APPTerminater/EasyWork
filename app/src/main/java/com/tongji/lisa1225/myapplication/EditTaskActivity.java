@@ -44,7 +44,7 @@ public class EditTaskActivity extends AppCompatActivity {
     @BindView(R.id.taskDDL) EditText etDDL;
     @BindView(R.id.Subscribe) EditText etContent;
     @BindView(R.id.btn_submit) Button _submitButton;
-    private String projectName,taskType,taskName,taskMemberEmail,taskDDL,taskContent,taskID;
+    private String projectID,taskType,taskName,taskMemberEmail,taskDDL,taskContent,taskID;
     private String taskOriName;
 
     private AVObject testObject = new AVObject("TaskInfo");
@@ -58,8 +58,8 @@ public class EditTaskActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         Intent intent = getIntent();
         //设置项目名称文字
-        projectName = intent.getStringExtra("projectName");
-        tvProject.setText(projectName);
+        tvProject.setText(intent.getStringExtra("projectName"));
+        projectID = intent.getStringExtra("projectID");
         //获取任务id
         taskID = intent.getStringExtra("id");
 
@@ -67,7 +67,6 @@ public class EditTaskActivity extends AppCompatActivity {
         adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, ctype);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);     //设置下拉列表框的下拉选项样式
         spType.setAdapter(adapter);
-        //todo:spType.setSelection(2);
         spType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {//条目点击事件
 
             @Override
@@ -203,11 +202,10 @@ public class EditTaskActivity extends AppCompatActivity {
             taskQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
                 public void onSubscribe(Disposable disposable) {
                 }
-
                 public void onNext(List<AVObject> TaskInfo) {
                     if (TaskInfo.size() != 0) {
                         for (int i = 0; i < TaskInfo.size(); i++) {
-                            if (projectName.equals(TaskInfo.get(i).getString("projectName"))) {
+                            if (projectID.equals(TaskInfo.get(i).getObjectId())) {
                                 onDuplicateName();
                                 return;
                             }
@@ -227,15 +225,14 @@ public class EditTaskActivity extends AppCompatActivity {
     // 判断完成的成员是否在项目中
     private void isMemberInProject()
     {
-        projectQuery.whereEqualTo("projectName", projectName);
-        projectQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
+        AVQuery<AVObject> query = new AVQuery<>("ProjectInfo");
+        query.getInBackground(projectID).subscribe(new Observer<AVObject>() {
             public void onSubscribe(Disposable disposable) {}
-            public void onNext(List<AVObject> ProjectInfo) {
-                if(taskMemberEmail.equals(ProjectInfo.get(0).getString("member1"))
-                        ||taskMemberEmail.equals(ProjectInfo.get(0).getString("member2"))
-                        ||taskMemberEmail.equals(ProjectInfo.get(0).getString("member3")))
+            public void onNext(AVObject ProjectInfo) {
+                if(taskMemberEmail.equals(ProjectInfo.getString("member1"))
+                        ||taskMemberEmail.equals(ProjectInfo.getString("member2")))
                 {
-                    editProject();
+                    editTask();
                 }
                 else
                 {
@@ -248,10 +245,10 @@ public class EditTaskActivity extends AppCompatActivity {
         });
     }
 
-    public void editProject()
+    public void editTask()
     {
         AVObject testObject = AVObject.createWithoutData("TaskInfo", taskID);
-        testObject.put("projectName", projectName);
+        //testObject.put("projectID",projectID);
         testObject.put("type",taskType);
         testObject.put("taskName",taskName);
         testObject.put("member", taskMemberEmail);
@@ -271,14 +268,14 @@ public class EditTaskActivity extends AppCompatActivity {
         });
     }
 
-    //成功添加任务，返回主界面
+    //成功修改任务，返回主界面
     private void onSubmitSuccess() {
         _submitButton.setEnabled(true);
         //返回项目界面
         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
         startActivity(intent);
     }
-    //添加失败
+    //修改失败
     private void onSubmitFailed() {
         Toast.makeText(getBaseContext(), "Edit task error!", Toast.LENGTH_LONG).show();
         _submitButton.setEnabled(true);

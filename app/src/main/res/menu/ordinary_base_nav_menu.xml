@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single"
+        android:id="@+id/group1">
+
+        <item
+            android:id="@+id/tuling"
+            android:icon="@drawable/nav_tuling"
+            android:title="@string/home" />
+        <item
+            android:id="@+id/nav_doing"
+            android:title="@string/doing" />
+        <item
+            android:id="@+id/nav_finished"
+            android:title="@string/finished" />
+        <item
+            android:id="@+id/nav_bin"
+            android:icon="@drawable/nav_bin"
+            android:title="@string/bin" />
+    </group>
+
+    <group android:checkableBehavior="single"
+        android:id="@+id/group2">
+        <item
+            android:id="@+id/nav_detail"
+            android:icon="@drawable/nav_detail"
+            android:title="@string/detail" />
+
+    </group>
+    <group android:checkableBehavior="single"
+        android:id="@+id/group3">
+
+        <item
+            android:icon="@drawable/nav_about"
+            android:id="@+id/nav_about"
+            android:title="About" />
+
+        <item
+            android:icon="@drawable/nav_logout"
+            android:id="@+id/logout"
+            android:title="@string/log_out"
+            />
+    </group>
+</menu>

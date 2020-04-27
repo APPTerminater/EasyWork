@@ -89,6 +89,7 @@ public class LoginActivity extends AppCompatActivity {
                         queryEmailAndPassword(email,password);
                         // On complete call either onLoginSuccess or onLoginFailed
                         progressDialog.dismiss();
+                        _loginButton.setEnabled(true);
                     }
                 }, 1000);
     }

@@ -44,7 +44,7 @@ public class AddTaskActivity extends AppCompatActivity {
     @BindView(R.id.taskDDL) EditText etDDL;
     @BindView(R.id.Subscribe) EditText etContent;
     @BindView(R.id.btn_submit) Button _submitButton;
-    private String projectName,taskType,taskName,taskMemberEmail,taskDDL,taskContent;
+    private String projectID,taskType,taskName,taskMemberEmail,taskDDL,taskContent;
 
     private AVObject testObject = new AVObject("TaskInfo");
     private AVQuery<AVObject> taskQuery = new AVQuery<>("TaskInfo");
@@ -57,8 +57,9 @@ public class AddTaskActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         Intent intent = getIntent();
         //设置项目名称文字
-        projectName = intent.getStringExtra("projectName");
-        tvProject.setText(projectName);
+        projectID = intent.getStringExtra("projectID");
+        tvProject.setText(intent.getStringExtra("projectName"));
+        //tvProject.setText(projectID);
 
         //设置任务类型的下拉框
         adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, ctype);
@@ -140,8 +141,8 @@ public class AddTaskActivity extends AppCompatActivity {
     public boolean validate() {
         boolean convertSuccess = true;
         //第一步，判断任务名是否有效
-        if (taskName.isEmpty() || taskName.length() < 3 || taskName.length() > 15) {
-            etName.setError("between 3 and 15 alphanumeric characters");
+        if (taskName.isEmpty() || taskName.length() < 2 || taskName.length() > 15) {
+            etName.setError("between 2 and 15 alphanumeric characters");
             convertSuccess = false;
         } else {
             etName.setError(null);
@@ -177,7 +178,7 @@ public class AddTaskActivity extends AppCompatActivity {
                 {
                     for (int i = 0;i < TaskInfo.size();i++)
                     {
-                        if(projectName.equals(TaskInfo.get(i).getString("projectName")))
+                        if(projectID.equals(TaskInfo.get(i).getString("projectID")))
                         {
                             onDuplicateName();
                             return;
@@ -193,15 +194,14 @@ public class AddTaskActivity extends AppCompatActivity {
     // 判断完成的成员是否在项目中
     private void isMemberInProject()
     {
-        projectQuery.whereEqualTo("projectName", projectName);
-        projectQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
+        AVQuery<AVObject> query = new AVQuery<>("ProjectInfo");
+        query.getInBackground(projectID).subscribe(new Observer<AVObject>() {
             public void onSubscribe(Disposable disposable) {}
-            public void onNext(List<AVObject> ProjectInfo) {
-                if(taskMemberEmail.equals(ProjectInfo.get(0).getString("member1"))
-                        ||taskMemberEmail.equals(ProjectInfo.get(0).getString("member2"))
-                        ||taskMemberEmail.equals(ProjectInfo.get(0).getString("member3")))
+            public void onNext(AVObject ProjectInfo) {
+                if(taskMemberEmail.equals(ProjectInfo.getString("member1"))
+                        ||taskMemberEmail.equals(ProjectInfo.getString("member2")))
                 {
-                    addProject();
+                    addTask();
                 }
                 else
                 {
@@ -214,17 +214,18 @@ public class AddTaskActivity extends AppCompatActivity {
         });
     }
 
-    public void addProject()
+    public void addTask()
     {
-        testObject.put("projectName", projectName);
+        testObject.put("projectID",projectID);
         testObject.put("type",taskType);
         testObject.put("taskName",taskName);
         testObject.put("member", taskMemberEmail);
         testObject.put("ddl",taskDDL);
         testObject.put("content",taskContent);
         testObject.put("finished",false);//任务是否完成
-        testObject.put("deleted",false);
-
+        testObject.put("deleted",false);//任务是否删除
+        testObject.put("checked",false);//任务是否确认完成
+        //Toast.makeText(AddTaskActivity.this, "开始保存了", Toast.LENGTH_SHORT).show();
         // 将对象保存到云端
         testObject.saveInBackground().subscribe(new Observer<AVObject>() {
             public void onSubscribe(Disposable disposable) {}

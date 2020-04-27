@@ -33,6 +33,9 @@
         </Spinner>
 
         <!-- TaskName Label -->
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
         <EditText android:id="@+id/taskName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -40,9 +43,12 @@
             android:hint="@string/task_name"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"/>
-
+        </android.support.design.widget.TextInputLayout>
 
         <!-- TaskMember's Email Label -->
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
         <EditText android:id="@+id/taskMember"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -51,8 +57,12 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
             />
+        </android.support.design.widget.TextInputLayout>
 
         <!-- Select Task's DDL -->
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
         <EditText android:id="@+id/taskDDL"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -61,8 +71,12 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
             />
+        </android.support.design.widget.TextInputLayout>
 
         <!-- Task's Content -->
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
         <EditText android:id="@+id/Subscribe"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -72,6 +86,7 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
             />
+        </android.support.design.widget.TextInputLayout>
 
         <android.support.v7.widget.AppCompatButton
             android:id="@+id/btn_submit"

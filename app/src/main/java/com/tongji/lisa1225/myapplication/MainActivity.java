@@ -1,13 +1,10 @@
 package com.tongji.lisa1225.myapplication;
 
 import com.laocaixw.layout.SuspendButtonLayout;
-import com.tongji.lisa1225.myapplication.Adapter.MainRVAdapter;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.Handler;
-import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewCompat;
@@ -17,12 +14,8 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v4.widget.DrawerLayout;
 import android.support.design.widget.NavigationView;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -48,12 +41,13 @@ import io.reactivex.disposables.Disposable;
 import com.astuetz.PagerSlidingTabStrip;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity{
     private static final String TAG = "MainActivity";
+    public static MainActivity instance;
     private static final int REQUEST_ADDPROGRAM = 0;
-    private static final int REQUEST_ADDTASK = 1;
 
     private static final String NO_PROGRAM = "You have no project!";
     private static final String NO_TASK = "You have no task!";
@@ -64,14 +58,15 @@ public class MainActivity extends AppCompatActivity{
 
     private AVQuery<AVObject> projectQuery = new AVQuery<>("ProjectInfo");
     private AVQuery<AVObject> taskQuery = new AVQuery<>("TaskInfo");
-    private AVQuery<AVObject> currentTaskQuery = new AVQuery<>("TaskInfo");
     //下拉框
     private ArrayAdapter<String> programAdapter;
-    List<String> projectList = new ArrayList<>();
-    static List<String> taskList = new ArrayList<>();
-    static List<AVObject> taskTotalInfo = new ArrayList<>();
+
+    List<String> projectNameList = new ArrayList<>();//存储项目标题的列表
+    List<String> projectIDList = new ArrayList<>();//存储项目ID的列表
+    static List<String> taskList = new ArrayList<>();//存储任务名称的列表
+    static List<AVObject> taskTotalInfo = new ArrayList<>();//存储leancloud格式的任务列表
     static int currentPosition;//目前任务卡是第几个
-    AlertDialog deleteTaskialog = null;
+    AlertDialog deleteTaskDialog = null;
 
     //悬浮按钮
     public String[] suspendChildButtonInfo = {"Add Task", "Delete Task", "EditTask", "亮度", "联系人", "短信"};
@@ -84,9 +79,9 @@ public class MainActivity extends AppCompatActivity{
     @BindView(R.id.pager) ViewPager pager;
 
     //用户信息
-    private String email,name,occupation,password;
+    static private String email,name,occupation,password;
     //项目信息
-    private String projectName;
+    private String projectName,projectID;
 
     private MyPagerAdapter myPagerAdapter;
 
@@ -101,8 +96,16 @@ public class MainActivity extends AppCompatActivity{
         occupation = app.getOccu();
         password = app.getPassword();
 
-        setContentView(R.layout.activity_main);
+        if(occupation.equals("Producer")) //producer界面
+        {
+            setContentView(R.layout.activity_main);
+        }
+        else
+        {
+            setContentView(R.layout.activity_main_ordi);
+        }
         ButterKnife.bind(this);
+        instance = this;
 
         //切换背景颜色
         BGColor[0] = getResources().getColor(R.color.pinkDarkBlue);
@@ -128,56 +131,82 @@ public class MainActivity extends AppCompatActivity{
             public boolean onNavigationItemSelected(@NonNull MenuItem item)
             {
                 //各种操作
-                switch (item.getItemId())
+                if(occupation.equals("Producer")) //producer界面
                 {
-                    case R.id.nav_edit:
-                        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-                        startActivity(intent);
-                        //Intent favorites = new Intent(MainActivity.this, LoveActivity.class);
-                        //startActivity(favorites);
-                        break;
-                    case R.id.nav_bin:
-                        //Intent guardian = new Intent(MainActivity.this, GuardianActivity.class);
-                        //startActivity(guardian);
-                        break;
-                    case R.id.nav_changetheme:
-                        /*if (isNight)
-                        {
-                            isNight = false;
-                            recreate();
-                        }
-                        else
-                        {
-                            isNight = true;
-                            recreate();
-                        }*/
-                        break;
-                    case R.id.tuling:
-                        //Intent tuling = new Intent(MainActivity.this,TulingActivity.class);
-                        //startActivity(tuling);
-                        break;
-                    case R.id.weather:
-                        //Intent weather = new Intent(MainActivity.this,WeatherActivity.class);
-                        //startActivity(weather);
-                        break;
-                    case R.id.nav_news:
-                        //Intent news = new Intent(MainActivity.this, NewsActivity.class);
-                        //startActivity(news);
-                        break;
-                    case R.id.nav_github:
-                        //Intent github = new Intent(MainActivity.this, GithubActivity.class);
-                        //startActivity(github);
-                        break;
-                    case R.id.nav_about:
-                        //Intent about = new Intent(MainActivity.this, AboutActivity.class);
-                        //startActivity(about);
-                        break;
-                    case R.id.logout:
-                        //Toasty.info(MainActivity.this, "你觉得可能有新版本吗", Toast.LENGTH_SHORT, true).show();
-                        Intent loginIntent = new Intent(MainActivity.this, LoginActivity.class);
-                        startActivity(loginIntent);
-                        break;
-                    default:
+                    switch (item.getItemId()) {
+                        case R.id.tuling://本页面，不需要跳转
+                            break;
+                        case R.id.nav_doing://本页面，不需要跳转
+                            break;
+                        case R.id.nav_finished:
+                            Intent finishIntent = new Intent(MainActivity.this, MainFinishedActivity.class);
+                            startActivity(finishIntent);
+                            finish();
+                            break;
+                        case R.id.nav_bin:
+                            Intent binIntent = new Intent(MainActivity.this, BinActivity.class);
+                            startActivity(binIntent);
+                            finish();
+                            break;
+                        case R.id.nav_edit:
+                            if (!projectNameList.get(0).equals(NO_PROGRAM)) {
+                                Intent editProgramIntent = new Intent(MainActivity.this, EditProgramActivity.class);
+                                editProgramIntent.putExtra("projectName", projectName);
+                                startActivity(editProgramIntent);
+                            } else {
+                                Toast.makeText(MainActivity.this, "There is no project related to you!", Toast.LENGTH_SHORT).show();
+                            }
+                            break;
+                        case R.id.nav_detail:
+                            //todo
+                            //Intent detail = new Intent(MainActivity.this,ProjectDetailActivity.class);
+                            //startActivity(detail);
+                            break;
+                        case R.id.nav_about:
+                            //Intent about = new Intent(MainActivity.this, AboutActivity.class);
+                            //startActivity(about);
+                            break;
+                        case R.id.logout:
+                            //Toasty.info(MainActivity.this, "你觉得可能有新版本吗", Toast.LENGTH_SHORT, true).show();
+                            finish();
+                            break;
+                        default:
+                    }
+                }
+                else
+                {
+                    switch (item.getItemId()) {
+                        case R.id.tuling://本页面，不需要跳转
+                            break;
+                        case R.id.nav_doing://本页面，不需要跳转
+                            break;
+                        case R.id.nav_finished:
+                            Intent finishIntent = new Intent(MainActivity.this, MainFinishedActivity.class);
+                            startActivity(finishIntent);
+                            finish();
+                            break;
+                        case R.id.nav_bin:
+                            Intent binIntent = new Intent(MainActivity.this, BinActivity.class);
+                            startActivity(binIntent);
+                            finish();
+                            break;
+                        case R.id.nav_detail:
+                            //todo
+                            //Intent detail = new Intent(MainActivity.this,ProjectDetailActivity.class);
+                            //startActivity(detail);
+                            break;
+                        case R.id.nav_about:
+                            //Intent about = new Intent(MainActivity.this, AboutActivity.class);
+                            //startActivity(about);
+                            break;
+                        case R.id.logout:
+                            //Toasty.info(MainActivity.this, "你觉得可能有新版本吗", Toast.LENGTH_SHORT, true).show();
+                            //Intent loginIntent = new Intent(MainActivity.this, LoginActivity.class);
+                            //startActivity(loginIntent);
+                            finish();
+                            break;
+                        default:
+                    }
                 }
                 return true;
             }
@@ -196,62 +225,168 @@ public class MainActivity extends AppCompatActivity{
         //toolbar.setTitleTextColor(getResources().getColor(R.color.darkBlue));
         //toolbar.setSubtitle(" "+occupation+" ");//设置子标题
         //toolbar.setSubtitleTextColor(getResources().getColor(R.color.pinkDarkBlue));
+        if(occupation.equals("Producer")) //producer界面
+        {
+            toolbar.inflateMenu(R.menu.toolbar_producer_base_menu);//设置右上角的填充菜单
+            //toolbar的按钮点击
+            toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    int menuItemId = item.getItemId();
+                    if (menuItemId == R.id.action_search) {
+                        Toast.makeText(MainActivity.this, " ", Toast.LENGTH_SHORT).show();
 
-        toolbar.inflateMenu(R.menu.base_toolbar_menu);//设置右上角的填充菜单
-        //toolbar的按钮点击
-        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                int menuItemId = item.getItemId();
-                if (menuItemId == R.id.action_search) {
-                    Toast.makeText(MainActivity.this , " " , Toast.LENGTH_SHORT).show();
-
-                } else if (menuItemId == R.id.action_notification) {
-                    Toast.makeText(MainActivity.this, " ", Toast.LENGTH_SHORT).show();
-                }else if (menuItemId == R.id.action_add) {
-                    Intent intent = new Intent(getApplicationContext(), AddProgramActivity.class);
-                    startActivityForResult(intent, REQUEST_ADDPROGRAM);
-                }
-                return true;
-            }
-        });
-
-       //toolbar下拉项目选择
-            //String[] ctype = new String[]{"Program1", "Program2222", "Program3333333"};
-            //创建一个数组适配器
-            //programAdapter = new ArrayAdapter<String>(this, R.layout.spinner_text, ctype);
-            //programAdapter = new ArrayAdapter<String>(this, R.layout.spinner_text, projectList);
-        projectQuery.whereEqualTo("producer", email);
-        projectQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
-            public void onSubscribe(Disposable disposable) {}
-            public void onNext(List<AVObject> projectInfo) {
-                if(projectInfo.size()==0)
-                {
-                    projectList.add(NO_PROGRAM);
-                    refreshProject();
-                }
-                else
-                {
-                    for(int i = 0;i<projectInfo.size();i++)
-                    {
-                        projectList.add(projectInfo.get(i).getString("projectName"));
+                    } else if (menuItemId == R.id.action_notification) {
+                        Toast.makeText(MainActivity.this, " ", Toast.LENGTH_SHORT).show();
+                    } else if (menuItemId == R.id.action_add) {
+                        Intent intent = new Intent(getApplicationContext(), AddProgramActivity.class);
+                        startActivity(intent);
                     }
-                    projectName = projectInfo.get(0).getString("projectName");
-                    refreshProject();
+                    return true;
                 }
-            }
-            public void onError(Throwable throwable) {}
-            public void onComplete() {}
-        });
-            //programAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);     //设置下拉列表框的下拉选项样式
-            //programSpinner.setAdapter(programAdapter);
+            });
+
+            projectQuery.whereEqualTo("producer", email);
+            projectQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
+                public void onSubscribe(Disposable disposable) {
+                }
+
+                public void onNext(List<AVObject> projectInfo) {
+                    if (projectInfo.size() == 0 && projectNameList.isEmpty()) {
+                        projectNameList.add(NO_PROGRAM);
+                        refreshProject();
+                    } else {
+                        for (int i = 0; i < projectInfo.size(); i++) {
+                            projectNameList.add(projectInfo.get(i).getString("projectName"));
+                            projectIDList.add(projectInfo.get(i).getObjectId());
+                        }
+                        projectID = projectInfo.get(0).getObjectId();
+                        projectName = projectInfo.get(0).getString("projectName");
+                        refreshProject();
+                    }
+                }
+
+                public void onError(Throwable throwable) {
+                }
+
+                public void onComplete() {
+                }
+            });
+
+            //悬浮按钮
+            final SuspendButtonLayout suspendButtonLayout = (SuspendButtonLayout) findViewById(R.id.layout);
+            suspendButtonLayout.setOnSuspendListener(new SuspendButtonLayout.OnSuspendListener() {
+                @Override
+                public void onButtonStatusChanged(int status) {
+                }
+
+                @Override
+                public void onChildButtonClick(int index) {
+                    switch (index)
+                    {
+                        case 1:
+                            Intent addIntent = new Intent(getApplicationContext(), AddTaskActivity.class);
+                            addIntent.putExtra("projectName", projectName);
+                            addIntent.putExtra("projectID", projectID);
+                            startActivity(addIntent);
+                            break;
+                        case 2:
+                            if(!taskTotalInfo.isEmpty())
+                            {
+                                showDeleteTaskDialog();
+                                //deleteTask();
+                            }
+                            else
+                            {
+                                Toast.makeText(MainActivity.this, "There is no task in this project!", Toast.LENGTH_SHORT).show();
+                            }
+                            break;
+                        case 3:
+                            if(!taskTotalInfo.isEmpty())
+                            {
+                                Intent editIntent = new Intent(getApplicationContext(), EditTaskActivity.class);
+                                editIntent.putExtra("projectName", projectName);
+                                editIntent.putExtra("projectID", projectID);
+                                editIntent.putExtra("id", taskTotalInfo.get(currentPosition).getObjectId());
+                                startActivity(editIntent);
+                            }
+                            else
+                            {
+                                Toast.makeText(MainActivity.this, "There is no task in this project!", Toast.LENGTH_SHORT).show();
+                            }
+                        default:
+                            break;
+                    }
+
+                    Toast.makeText(MainActivity.this, "您点击了【"
+                            + suspendChildButtonInfo[index - 1] + "】按钮！", Toast.LENGTH_SHORT).show();
+                }
+            });
+            suspendButtonLayout.setPosition(true, 100);
+        }
+        else //非producer界面
+        {
+            toolbar.inflateMenu(R.menu.toolbar_no_addbtn_menu);//设置右上角的填充菜单
+            //toolbar的按钮点击
+            toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    int menuItemId = item.getItemId();
+                    if (menuItemId == R.id.action_search) {
+                        Toast.makeText(MainActivity.this , " " , Toast.LENGTH_SHORT).show();
+
+                    } else if (menuItemId == R.id.action_notification) {
+                        Toast.makeText(MainActivity.this, " ", Toast.LENGTH_SHORT).show();
+                    }
+                    return true;
+                }
+            });
+
+            final AVQuery<AVObject> member1Query = new AVQuery<>("ProjectInfo");
+            member1Query.whereEqualTo("member1", email);
+
+            final AVQuery<AVObject> member2Query = new AVQuery<>("ProjectInfo");
+            member2Query.whereEqualTo("member2", email);
+
+            projectQuery = AVQuery.or(Arrays.asList(member1Query, member2Query));
+            //projectQuery.whereEqualTo("producer", email);
+            projectQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
+                public void onSubscribe(Disposable disposable) {}
+                public void onNext(List<AVObject> projectInfo) {
+                    if(projectInfo.size()==0 && projectNameList.isEmpty())
+                    {
+                        projectNameList.add(NO_PROGRAM);
+                        refreshProject();
+                    }
+                    else
+                    {
+                        for(int i = 0;i<projectInfo.size();i++)
+                        {
+                            projectNameList.add(projectInfo.get(i).getString("projectName"));
+                            projectIDList.add(projectInfo.get(i).getObjectId());
+                        }
+                        projectID = projectInfo.get(0).getObjectId();
+                        projectName = projectInfo.get(0).getString("projectName");
+                        refreshProject();
+                    }
+                }
+                public void onError(Throwable throwable) {}
+                public void onComplete() {}
+            });
+        }
+
+
         //项目条目点击事件
         programSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 projectName = programAdapter.getItem(position);
-                Toast.makeText(MainActivity.this, projectName, Toast.LENGTH_SHORT).show();
+                if(!projectName.equals(NO_PROGRAM))
+                {
+                    projectID = projectIDList.get(position);
+                }
+                //Toast.makeText(MainActivity.this, projectName, Toast.LENGTH_SHORT).show();
                 parent.setVisibility(View.VISIBLE);
                 showTask();
             }
@@ -262,89 +397,54 @@ public class MainActivity extends AppCompatActivity{
             }
         });
 
-        //悬浮按钮
-        final SuspendButtonLayout suspendButtonLayout = (SuspendButtonLayout) findViewById(R.id.layout);
-        suspendButtonLayout.setOnSuspendListener(new SuspendButtonLayout.OnSuspendListener() {
-            @Override
-            public void onButtonStatusChanged(int status) {
-
-            }
-
-            @Override
-            public void onChildButtonClick(int index) {
-                switch (index)
-                {
-                    case 1:
-                        Intent addIntent = new Intent(getApplicationContext(), AddTaskActivity.class);
-                        addIntent.putExtra("projectName", projectName);
-                        startActivity(addIntent);
-                        break;
-                    case 2:
-                        if(!taskTotalInfo.isEmpty())
-                        {
-                            showDeleteTaskDialog();
-                            //deleteTask();
-                        }
-                        else
-                        {
-                            Toast.makeText(MainActivity.this, "There is no task in this project!", Toast.LENGTH_SHORT).show();
-                        }
-                        break;
-                    case 3:
-                        if(!taskTotalInfo.isEmpty())
-                        {
-                            Intent editIntent = new Intent(getApplicationContext(), EditTaskActivity.class);
-                            editIntent.putExtra("projectName", projectName);
-                            editIntent.putExtra("id", taskTotalInfo.get(currentPosition).getObjectId());
-                            startActivity(editIntent);
-                        }
-                        else
-                        {
-                            Toast.makeText(MainActivity.this, "There is no task in this project!", Toast.LENGTH_SHORT).show();
-                        }
-                    default:
-                        break;
-                }
-
-
-                Toast.makeText(MainActivity.this, "您点击了【"
-                        + suspendChildButtonInfo[index - 1] + "】按钮！", Toast.LENGTH_SHORT).show();
-            }
-        });
-        suspendButtonLayout.setPosition(true, 100);
-
     }
 
     private void showTask()
     {
-        //显示任务
-        taskQuery.whereEqualTo("projectName", projectName);
-        taskQuery.whereEqualTo("finished", false);
-        taskQuery.whereEqualTo("deleted", false);
-        taskQuery.orderByAscending("ddl");
-        taskQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
-            public void onSubscribe(Disposable disposable) {}
-            public void onNext(List<AVObject> taskInfo) {
-                taskTotalInfo = taskInfo;
-                int initsize = taskList.size();
-                if(taskInfo.size()==0)
-                {
-                    taskList.add(NO_TASK);
-                }
-                else
-                {
-                    for(int i = 0;i<taskInfo.size();i++)
-                    {
-                        taskList.add(taskInfo.get(i).getString("taskName"));
-                    }
-                }
-                taskList = taskList.subList(initsize,taskList.size());
-                myPagerAdapter = new MyPagerAdapter(getSupportFragmentManager());
-                setPaperAdapter();
+        if(!projectName.equals(NO_PROGRAM))
+        {
+            //显示任务
+            taskQuery.whereEqualTo("projectID", projectID);
+            taskQuery.whereEqualTo("finished", false);
+            taskQuery.whereEqualTo("deleted", false);
+            //除了管理员，只能看到项目中自己的正在进展的任务
+            if (!occupation.equals("Producer")) {
+                taskQuery.whereEqualTo("member", email);
             }
-            public void onError(Throwable throwable) {}
-            public void onComplete() {}
-        });
+            taskQuery.orderByAscending("ddl");
+            taskQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
+                public void onSubscribe(Disposable disposable) {
+                }
+
+                public void onNext(List<AVObject> taskInfo) {
+                    taskTotalInfo = taskInfo;
+                    int initsize = taskList.size();
+                    if (taskInfo.size() == 0 ) {
+                        taskList.add(NO_TASK);
+                    } else {
+                        for (int i = 0; i < taskInfo.size(); i++) {
+                            taskList.add(taskInfo.get(i).getString("taskName"));
+                        }
+                    }
+                    taskList = taskList.subList(initsize, taskList.size());
+                    myPagerAdapter = new MyPagerAdapter(getSupportFragmentManager());
+                    setPaperAdapter();
+                }
+
+                public void onError(Throwable throwable) {
+                }
+
+                public void onComplete() {
+                }
+            });
+        }
+        else//没有项目的情况
+        {
+            //taskTotalInfo = null;
+            taskList.add(NO_TASK);
+            myPagerAdapter = new MyPagerAdapter(getSupportFragmentManager());
+            setPaperAdapter();
+        }
     }
 
     private void setPaperAdapter()
@@ -376,38 +476,17 @@ public class MainActivity extends AppCompatActivity{
         tabStrip.setOnPageChangeListener(mPageChangeListener);
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_ADDPROGRAM) {
-            if (resultCode == RESULT_OK) {
-
-                projectList.add(data.getStringExtra("projectName"));
-                if(projectList.contains(NO_PROGRAM))
-                {
-                    projectList.remove(NO_PROGRAM);
-                }
-            }
-        }
-        else if(requestCode == REQUEST_ADDTASK){
-            if (resultCode == RESULT_OK) {
-                //taskList.add(data.getStringExtra("taskName"));
-                //todo
-                showTask();
-            }
-        }
-    }
 
     private void refreshProject()
     {
-        programAdapter = new ArrayAdapter<String>(this, R.layout.spinner_text, projectList);
+        programAdapter = new ArrayAdapter<String>(this, R.layout.spinner_text, projectNameList);
         programAdapter.notifyDataSetChanged();
         programAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);     //设置下拉列表框的下拉选项样式
-
         programSpinner.setAdapter(programAdapter);
     }
 
     private void showDeleteTaskDialog(){
-        if(deleteTaskialog == null) {
+        if(deleteTaskDialog == null) {
             AlertDialog.Builder deleteTaskBuilder = new AlertDialog.Builder(this);
             //deleteTaskBuilder.setIcon(R.drawable.picture);
             deleteTaskBuilder.setTitle("Are you sure to delete this Task?");
@@ -425,9 +504,9 @@ public class MainActivity extends AppCompatActivity{
 
                         }
                     });
-            deleteTaskialog = deleteTaskBuilder.create();
+            deleteTaskDialog = deleteTaskBuilder.create();
         }
-        deleteTaskialog.show();
+        deleteTaskDialog.show();
     }
 
     private void deleteTask()
@@ -450,7 +529,7 @@ public class MainActivity extends AppCompatActivity{
     }
 
 
-    public class MyPagerAdapter extends FragmentPagerAdapter {
+    private class MyPagerAdapter extends FragmentPagerAdapter {
 
 
         private MyPagerAdapter(FragmentManager fm) {
@@ -465,11 +544,13 @@ public class MainActivity extends AppCompatActivity{
 
         @Override
         public int getCount() {
+
             return taskList.size();
         }
 
         @Override
         public long getItemId(int position) {
+
             return taskList.get(position).hashCode();
         }
 
@@ -489,7 +570,7 @@ public class MainActivity extends AppCompatActivity{
         private static final String ARG_POSITION = "position";
 
         @BindView(R.id.taskType) TextView tvType;
-        @BindView(R.id.taskDDL) TextView tvDDL;
+        //@BindView(R.id.taskDDL) TextView tvDDL;
         @BindView(R.id.taskContent) TextView tvContent;
         @BindView(R.id.id_checkbox) CheckBox checkBox;
 
@@ -512,6 +593,7 @@ public class MainActivity extends AppCompatActivity{
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            //todo:测试任务
             View rootView = inflater.inflate(R.layout.fragment_card,container,false);
             ButterKnife.bind(this, rootView);
             ViewCompat.setElevation(rootView, 50);
@@ -519,17 +601,43 @@ public class MainActivity extends AppCompatActivity{
             {
                 tvType.setTextColor(BGColor[position%BGColorNum]);
                 tvType.setText(taskTotalInfo.get(position).getString("type"));
-                tvDDL.setText("Finish it before:"+taskTotalInfo.get(position).getString("ddl"));
+                checkBox.setText("Finish it before:"+taskTotalInfo.get(position).getString("ddl"));
                 tvContent.setText("Task Describition:\n"+taskTotalInfo.get(position).getString("content"));
+
+            }
+            if(occupation.equals("Producer"))
+            {
+                checkBox.setClickable(false);
             }
 
             checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
                 @Override
                 public void onCheckedChanged(CompoundButton arg0, boolean arg1) {
                     // TODO Auto-generated method stub
-                    if(checkBox.isChecked())
-                    {
+                    if(!taskTotalInfo.isEmpty()) {
+                        AVObject testObject = AVObject.createWithoutData("TaskInfo", taskTotalInfo.get(currentPosition).getObjectId());
+                        if (checkBox.isChecked()) {
+                            testObject.put("finished", true);
+                            //testObject.put("deleted",true);
+                        } else {
+                            testObject.put("finished", false);
+                            //testObject.put("deleted",false);
+                        }
+                        testObject.saveInBackground().subscribe(new Observer<AVObject>() {
+                            public void onSubscribe(Disposable disposable) {
+                            }
 
+                            public void onNext(AVObject todo) {
+                                // 成功保存之后，执行其他逻辑
+                            }
+
+                            public void onError(Throwable throwable) {
+                                // 异常处理
+                            }
+
+                            public void onComplete() {
+                            }
+                        });
                     }
                 }
             });
@@ -540,7 +648,6 @@ public class MainActivity extends AppCompatActivity{
         public void onPause()
         {
             super.onPause();
-
         }
     }
 

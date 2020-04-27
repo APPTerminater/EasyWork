@@ -23,9 +23,8 @@ import io.reactivex.disposables.Disposable;
 import butterknife.ButterKnife;
 import butterknife.BindView;
 
-public class AddProgramActivity extends AppCompatActivity {
-    private static final String TAG = "AddProgramActivity";
-    private static final int REQUEST_SIGNUP = 0;
+public class EditProgramActivity extends AppCompatActivity {
+    private static final String TAG = "EditProgramActivity";
 
     @BindView(R.id.programName) EditText _programNameText;
     @BindView(R.id.member1) EditText _memberText1;
@@ -34,14 +33,15 @@ public class AddProgramActivity extends AppCompatActivity {
     //@BindView(R.id.link_signup) TextView _signupLink;
 
     private AVObject testObject = new AVObject("ProjectInfo");
-    private AVQuery<AVObject> query = new AVQuery<>("ProjectInfo");
+    private AVQuery<AVObject> projectQuery = new AVQuery<>("ProjectInfo");
     private AVQuery<AVObject> queryUser = new AVQuery<>("UserInfo");
 
     AlertDialog dialog = null;
 
     private String email,name,occupation,password;
-    private String projectName,member1,member2;
-    private String email1,email2;
+    private String projectName, email1,email2;
+
+    private String oriProjectName,projectID;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -55,6 +55,26 @@ public class AddProgramActivity extends AppCompatActivity {
         name = app.getUserName();
         occupation = app.getOccu();
         password = app.getPassword();
+
+        Intent intent = getIntent();
+        //设置项目名称文字
+        oriProjectName = intent.getStringExtra("projectName");
+        _programNameText.setText(oriProjectName);
+
+        projectQuery.whereEqualTo("projectName", oriProjectName);
+        projectQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
+            public void onSubscribe(Disposable disposable) {}
+            public void onNext(List<AVObject> projectInfo) {
+                if(projectInfo.size()==1)
+                {
+                    projectID = projectInfo.get(0).getObjectId();
+                    _memberText1.setText(projectInfo.get(0).getString("member1"));
+                    _memberText2.setText(projectInfo.get(0).getString("member2"));
+                }
+            }
+            public void onError(Throwable throwable) {}
+            public void onComplete() {}
+        });
 
         //点击提交按钮
         _submitButton.setOnClickListener(new View.OnClickListener() {
@@ -78,7 +98,7 @@ public class AddProgramActivity extends AppCompatActivity {
         }
         _submitButton.setEnabled(false);
 
-        final ProgressDialog progressDialog = new ProgressDialog(AddProgramActivity.this,
+        final ProgressDialog progressDialog = new ProgressDialog(EditProgramActivity.this,
                 R.style.Theme_AppCompat_Dialog);
         progressDialog.setIndeterminate(true);
         progressDialog.setMessage("Authenticating...");
@@ -103,7 +123,6 @@ public class AddProgramActivity extends AppCompatActivity {
         String projectName = _programNameText.getText().toString();
         String email1 = _memberText1.getText().toString();
         String email2 = _memberText2.getText().toString();
-
         if (email1.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             _memberText1.setError("enter a valid email address");
             valid = false;
@@ -137,14 +156,14 @@ public class AddProgramActivity extends AppCompatActivity {
             public void onNext(List<AVObject> UserInfo) {
                 if(UserInfo.size()==1)
                 {
-                    member1 = UserInfo.get(0).getString("name");
                     if(!email2.isEmpty())
                     {
                         checkEmail2();
                     }
                     else
                     {
-                        showDialog();
+                        queryProjectName(projectName, email1, email2);
+                        _submitButton.setEnabled(true);
                     }
                 }
                 else
@@ -165,9 +184,8 @@ public class AddProgramActivity extends AppCompatActivity {
             public void onNext(List<AVObject> UserInfo) {
                 if(UserInfo.size()==1)
                 {
-                    member2 = UserInfo.get(0).getString("name");
-                    showDialog();
-
+                        queryProjectName(projectName, email1, email2);
+                        _submitButton.setEnabled(true);
                 }
                 else
                 {
@@ -185,61 +203,16 @@ public class AddProgramActivity extends AppCompatActivity {
         _submitButton.setEnabled(true);
     }
 
-    //todo:https://blog.csdn.net/weixin_34194551/article/details/94238275
-    private void showDialog(){
-        if(dialog == null) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            //builder.setIcon(R.drawable.picture);
-            builder.setTitle("Are you sure to add this Program?");
-            builder.setMessage("Program Name: " + projectName + "\n"
-                    + "Producer: " + name + "\n"
-                    + "Member1:" + member1 + "\n"
-                    + "Member2:" + member2 + "\n");
-            builder.setPositiveButton("Yes",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            queryProjectName(projectName, email1, email2);
-                            _submitButton.setEnabled(true);
-                        }
-                    });
-            builder.setNegativeButton("No",
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            _submitButton.setEnabled(true);
-                        }
-                    });
-            dialog = builder.create();
-        }
-        dialog.show();
-
-    }
-
-
-    @Override
-    public void onBackPressed() {
-        // disable going back to the MainActivity
-        finish();
-        //moveTaskToBack(true);
-    }
-
     //成功添加项目
     private void onSubmitSuccess() {
         _submitButton.setEnabled(true);
         //返回项目界面
-        if (MainActivity.instance != null) {
-            MainActivity.instance.finish();
-        }
-        Intent mainIntent = new Intent(AddProgramActivity.this,MainActivity.class);
-        startActivity(mainIntent);
-        finish();
-
-        // finish();
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        startActivity(intent);
     }
 
     private void onSubmitFailed() {
-        Toast.makeText(getBaseContext(), "Add project error!", Toast.LENGTH_LONG).show();
+        Toast.makeText(getBaseContext(), "Edit project error!", Toast.LENGTH_LONG).show();
         _submitButton.setEnabled(true);
     }
 
@@ -252,32 +225,38 @@ public class AddProgramActivity extends AppCompatActivity {
     //查询此项目是否已经登记过，若没有则进行登记
     public void queryProjectName(final String projectName, final String member1, final String member2)
     {
-        query.whereEqualTo("projectName", projectName);
-        query.findInBackground().subscribe(new Observer<List<AVObject>>() {
-            public void onSubscribe(Disposable disposable) {}
-            public void onNext(List<AVObject> projectInfo) {
-                if(projectInfo.size()==0)
-                {
-                    addProject(projectName,member1,member2);
+        if(!projectName.equals(oriProjectName)) {
+            projectQuery.whereEqualTo("projectName", projectName);
+            projectQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
+                public void onSubscribe(Disposable disposable) {
                 }
-                else
-                {
-                    onDuplicateProject();
-                }
-            }
-            public void onError(Throwable throwable) {}
-            public void onComplete() {}
-        });
-    }
-    public void addProject(final String projectName, final String member1, final String member2)
-    {
-        testObject.put("projectName", projectName);
-        testObject.put("producer",email);
-        testObject.put("member1", member1);
-        testObject.put("member2",member2);
-        testObject.put("finished",false);
 
-        // 将对象保存到云端
+                public void onNext(List<AVObject> projectInfo) {
+                    if (projectInfo.size() == 0) {
+                        editProject(projectName, member1, member2);
+                    } else {
+                        onDuplicateProject();
+                    }
+                }
+
+                public void onError(Throwable throwable) {
+                }
+
+                public void onComplete() {
+                }
+            });
+        }
+        else
+        {
+            editProject(projectName, member1, member2);
+        }
+    }
+    public void editProject(final String projectName, final String member1, final String member2)
+    {
+        AVObject testObject = AVObject.createWithoutData("ProjectInfo", projectID);
+        testObject.put("projectName", projectName);
+        testObject.put("member1", member1);
+        testObject.put("member2", member2);
         testObject.saveInBackground().subscribe(new Observer<AVObject>() {
             public void onSubscribe(Disposable disposable) {}
             public void onNext(AVObject todo) {
