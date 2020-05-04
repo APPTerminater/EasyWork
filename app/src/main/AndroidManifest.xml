@@ -13,7 +13,7 @@
 
     <application
         tools:replace="android:appComponentFactory"
-        android:name=".MyLeanCloudApp"
+        android:name=".Application.MyLeanCloudApp"
         android:appComponentFactory="任意字符"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -64,6 +64,16 @@
             </intent-filter>
         </activity>
         <activity android:name=".MainFinishedActivity"  >
+            <intent-filter>
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".ProgramInfoActivity"  >
+            <intent-filter>
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".ProgramTestActivity"  >
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>

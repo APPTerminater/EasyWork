@@ -1,4 +1,4 @@
-package com.tongji.lisa1225.myapplication;
+package com.tongji.lisa1225.myapplication.Application;
 
 import android.app.Application;
 
@@ -6,7 +6,8 @@ import cn.leancloud.AVLogger;
 import cn.leancloud.AVOSCloud;
 
 public class MyLeanCloudApp extends Application {
-    private String userName,email,occu,password;;
+    private String userName,email,occu,password;
+    private boolean firstLogin;
 
     public String getUserName() {
         return userName;
@@ -22,11 +23,18 @@ public class MyLeanCloudApp extends Application {
         return password;
     }
 
+    public Boolean getFirstLogin(){ return firstLogin; }
+
     public void setUserInfo(String email,String userName, String occu, String password) {
         this.userName = userName;
         this.email = email;
         this.occu = occu;
         this.password = password;
+    }
+
+    public void setFirstLogin(boolean firstLogin)
+    {
+        this.firstLogin = firstLogin;
     }
 
     @Override

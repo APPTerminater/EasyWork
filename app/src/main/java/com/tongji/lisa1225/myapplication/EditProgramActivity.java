@@ -2,7 +2,6 @@ package com.tongji.lisa1225.myapplication;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -12,6 +11,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import com.tongji.lisa1225.myapplication.Application.MyLeanCloudApp;
 
 import java.util.List;
 
@@ -30,7 +31,6 @@ public class EditProgramActivity extends AppCompatActivity {
     @BindView(R.id.member1) EditText _memberText1;
     @BindView(R.id.member2) EditText _memberText2;
     @BindView(R.id.btn_submit) Button _submitButton;
-    //@BindView(R.id.link_signup) TextView _signupLink;
 
     private AVObject testObject = new AVObject("ProjectInfo");
     private AVQuery<AVObject> projectQuery = new AVQuery<>("ProjectInfo");
@@ -206,9 +206,13 @@ public class EditProgramActivity extends AppCompatActivity {
     //成功添加项目
     private void onSubmitSuccess() {
         _submitButton.setEnabled(true);
+        if (MainActivity.instance != null) {
+            MainActivity.instance.finish();
+        }
         //返回项目界面
         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
         startActivity(intent);
+        finish();
     }
 
     private void onSubmitFailed() {

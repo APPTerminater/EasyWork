@@ -1,6 +1,8 @@
 package com.tongji.lisa1225.myapplication;
 
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v4.view.GravityCompat;
@@ -36,8 +38,10 @@ import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 
 import com.astuetz.PagerSlidingTabStrip;
+import com.tongji.lisa1225.myapplication.Application.MyLeanCloudApp;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MainFinishedActivity extends AppCompatActivity{
@@ -45,7 +49,7 @@ public class MainFinishedActivity extends AppCompatActivity{
     private static final int REQUEST_ADDPROGRAM = 0;
 
     private static final String NO_PROGRAM = "You have no project!";
-    private static final String NO_TASK = "You have no task!";
+    private static final String NO_TASK = "There is no task!";
 
     static final int BGColorNum = 5;
     static int[] BGColor = new int[BGColorNum];
@@ -58,10 +62,11 @@ public class MainFinishedActivity extends AppCompatActivity{
 
     List<String> projectNameList = new ArrayList<>();//存储项目标题的列表
     List<String> projectIDList = new ArrayList<>();//存储项目ID的列表
+    List<Boolean> projectDoingList = new ArrayList<>();//存储项目状态的列表
     static List<String> taskList = new ArrayList<>();//存储任务名称的列表
     static List<AVObject> taskTotalInfo = new ArrayList<>();//存储leancloud格式的任务列表
     static int currentPosition;//目前任务卡是第几个
-    AlertDialog deleteTaskDialog = null;
+    private AlertDialog deleteTaskDialog = null;
 
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.programName) Spinner programSpinner;
@@ -74,8 +79,10 @@ public class MainFinishedActivity extends AppCompatActivity{
     static private String email,name,occupation,password;
     //项目信息
     private String projectName,projectID;
+    static private boolean projectDoing;
 
-    private MainFinishedActivity.MyPagerAdapter myPagerAdapter;
+
+    private MainFinishedActivity.MyPagerAdapter2 myPagerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,7 +115,6 @@ public class MainFinishedActivity extends AppCompatActivity{
         user_occu.setText(occupation);
         //侧边栏按钮
         navigationView.setItemBackgroundResource(R.color.grey);
-        //navigationView.setCheckedItem(R.id.nav_guardian);
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener()
         {
             @Override
@@ -139,8 +145,6 @@ public class MainFinishedActivity extends AppCompatActivity{
                         {
                             Toast.makeText(MainFinishedActivity.this, "There is no project related to you!", Toast.LENGTH_SHORT).show();
                         }
-                        //Intent favorites = new Intent(MainFinishedActivity.this, LoveActivity.class);
-                        //startActivity(favorites);
                         break;
                     case R.id.nav_bin:
                         Intent binIntent = new Intent(MainFinishedActivity.this,BinActivity.class);
@@ -148,16 +152,31 @@ public class MainFinishedActivity extends AppCompatActivity{
                         finish();
                         break;
                     case R.id.nav_detail:
-                        //todo
-                        //Intent weather = new Intent(MainFinishedActivity.this,WeatherActivity.class);
-                        //startActivity(weather);
+                        if (!projectNameList.get(0).equals(NO_PROGRAM)) {
+                            Intent detailIntent = new Intent(MainFinishedActivity.this, ProgramInfoActivity.class);
+                            detailIntent.putExtra("projectName", projectName);
+                            detailIntent.putExtra("projectID", projectID);
+                            startActivity(detailIntent);
+                        } else
+                        {
+                            Toast.makeText(MainFinishedActivity.this, "There is no project related to you!", Toast.LENGTH_SHORT).show();
+                        }
+                        break;
+                    case R.id.nav_restart:
+                        if(!taskTotalInfo.isEmpty()&&projectDoing)
+                        {
+                            showDeleteTaskDialog();
+                        }
+                        else
+                        {
+                            Toast.makeText(MainFinishedActivity.this, "You can't undo the task now!", Toast.LENGTH_SHORT).show();
+                        }
                         break;
                     case R.id.nav_about:
                         //Intent about = new Intent(MainFinishedActivity.this, AboutActivity.class);
                         //startActivity(about);
                         break;
                     case R.id.logout:
-                        //Toasty.info(MainFinishedActivity.this, "你觉得可能有新版本吗", Toast.LENGTH_SHORT, true).show();
                         finish();
                         break;
                     default:
@@ -174,32 +193,33 @@ public class MainFinishedActivity extends AppCompatActivity{
             }
         });
 
-        //toolbar.setLogo(R.mipmap.home);//设置app logo
-        //toolbar.setTitle(" "+name+" ");//设置主标题
-        //toolbar.setTitleTextColor(getResources().getColor(R.color.darkBlue));
-        //toolbar.setSubtitle(" "+occupation+" ");//设置子标题
-        //toolbar.setSubtitleTextColor(getResources().getColor(R.color.pinkDarkBlue));
-
         toolbar.inflateMenu(R.menu.toolbar_no_addbtn_menu);//设置右上角的填充菜单
         //toolbar的按钮点击
         toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 int menuItemId = item.getItemId();
-                if (menuItemId == R.id.action_search) {
-                    Toast.makeText(MainFinishedActivity.this , " " , Toast.LENGTH_SHORT).show();
-
-                } else if (menuItemId == R.id.action_notification) {
+                if (menuItemId == R.id.action_notification) {
                     Toast.makeText(MainFinishedActivity.this, " ", Toast.LENGTH_SHORT).show();
-                }else if (menuItemId == R.id.action_add) {
-                    Intent intent = new Intent(getApplicationContext(), AddProgramActivity.class);
-                    startActivityForResult(intent, REQUEST_ADDPROGRAM);
                 }
                 return true;
             }
         });
 
-        projectQuery.whereEqualTo("producer", email);
+        if(occupation.equals("Producer")) //producer界面
+        {
+            projectQuery.whereEqualTo("producer", email);
+        }
+        else
+        {
+            final AVQuery<AVObject> member1Query = new AVQuery<>("ProjectInfo");
+            member1Query.whereEqualTo("member1", email);
+
+            final AVQuery<AVObject> member2Query = new AVQuery<>("ProjectInfo");
+            member2Query.whereEqualTo("member2", email);
+
+            projectQuery = AVQuery.or(Arrays.asList(member1Query, member2Query));
+        }
         projectQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
             public void onSubscribe(Disposable disposable) {}
             public void onNext(List<AVObject> projectInfo) {
@@ -214,9 +234,11 @@ public class MainFinishedActivity extends AppCompatActivity{
                     {
                         projectNameList.add(projectInfo.get(i).getString("projectName"));
                         projectIDList.add(projectInfo.get(i).getObjectId());
+                        projectDoingList.add(!(projectInfo.get(i).getBoolean("testing")||projectInfo.get(i).getBoolean("finished")));
                     }
                     projectID = projectInfo.get(0).getObjectId();
                     projectName = projectInfo.get(0).getString("projectName");
+                    projectDoing = !(projectInfo.get(0).getBoolean("testing")||projectInfo.get(0).getBoolean("finished"));
                     refreshProject();
                 }
             }
@@ -233,6 +255,8 @@ public class MainFinishedActivity extends AppCompatActivity{
                 if(!projectName.equals(NO_PROGRAM))
                 {
                     projectID = projectIDList.get(position);
+                    projectDoing = projectDoingList.get(position);
+
                 }
                 //Toast.makeText(MainFinishedActivity.this, projectName, Toast.LENGTH_SHORT).show();
                 parent.setVisibility(View.VISIBLE);
@@ -253,7 +277,7 @@ public class MainFinishedActivity extends AppCompatActivity{
             taskQuery.whereEqualTo("projectID", projectID);
             taskQuery.whereEqualTo("finished", true);
             taskQuery.whereEqualTo("deleted", false);
-            taskQuery.orderByDescending("checked");
+            taskQuery.orderByAscending("checked");
             taskQuery.addAscendingOrder("ddl");
             taskQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
                 public void onSubscribe(Disposable disposable) {
@@ -270,7 +294,7 @@ public class MainFinishedActivity extends AppCompatActivity{
                         }
                     }
                     taskList = taskList.subList(initsize, taskList.size());
-                    myPagerAdapter = new MainFinishedActivity.MyPagerAdapter(getSupportFragmentManager());
+                    myPagerAdapter = new MainFinishedActivity.MyPagerAdapter2(getSupportFragmentManager());
                     setPaperAdapter();
                 }
 
@@ -283,11 +307,60 @@ public class MainFinishedActivity extends AppCompatActivity{
         }
         else//没有项目的情况
         {
-            //taskTotalInfo = null;
-            taskList.add(NO_TASK);
-            myPagerAdapter = new MyPagerAdapter(getSupportFragmentManager());
+            if(taskList.isEmpty())
+            {
+                taskList.add(NO_TASK);
+            }
+            myPagerAdapter = new MyPagerAdapter2(getSupportFragmentManager());
             setPaperAdapter();
         }
+    }
+
+    private void showDeleteTaskDialog(){
+        if(deleteTaskDialog == null) {
+            AlertDialog.Builder deleteTaskBuilder = new AlertDialog.Builder(this);
+            //deleteTaskBuilder.setIcon(R.drawable.picture);
+            deleteTaskBuilder.setTitle("Are you sure to Undo this Task?");
+            deleteTaskBuilder.setPositiveButton("Yes",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            deleteTask();
+                        }
+                    });
+            deleteTaskBuilder.setNegativeButton("No",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+
+                        }
+                    });
+            deleteTaskDialog = deleteTaskBuilder.create();
+        }
+        deleteTaskDialog.show();
+    }
+
+    private void deleteTask()
+    {
+        AVObject del = AVObject.createWithoutData("TaskInfo", taskTotalInfo.get(currentPosition).getObjectId());
+        del.put("finished", false);
+        del.saveInBackground().subscribe(new Observer<AVObject>() {
+            public void onSubscribe(Disposable disposable) {}
+            public void onNext(AVObject todo) {
+                // 成功保存之后，执行其他逻辑
+                restartActivity(MainFinishedActivity.this);
+            }
+            public void onError(Throwable throwable) {
+                // 异常处理
+            }
+            public void onComplete() {}
+        });
+    }
+    public void restartActivity(Activity activity) {
+
+        activity.finish();
+        activity.startActivity(activity.getIntent());
+
     }
 
     private void setPaperAdapter()
@@ -341,10 +414,10 @@ public class MainFinishedActivity extends AppCompatActivity{
         programSpinner.setAdapter(programAdapter);
     }
 
-    public class MyPagerAdapter extends FragmentPagerAdapter {
+    public class MyPagerAdapter2 extends FragmentPagerAdapter {
 
 
-        private MyPagerAdapter(FragmentManager fm) {
+        private MyPagerAdapter2(FragmentManager fm) {
             super(fm);
         }
 
@@ -381,6 +454,7 @@ public class MainFinishedActivity extends AppCompatActivity{
 
         @BindView(R.id.taskType) TextView tvType;
         //@BindView(R.id.taskDDL) TextView tvDDL;
+        @BindView(R.id.taskMember) TextView tvMember;
         @BindView(R.id.taskContent) TextView tvContent;
         @BindView(R.id.id_checkbox) CheckBox checkBox;
 
@@ -403,7 +477,6 @@ public class MainFinishedActivity extends AppCompatActivity{
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            //todo:测试任务
             View rootView = inflater.inflate(R.layout.fragment_card,container,false);
             ButterKnife.bind(this, rootView);
             ViewCompat.setElevation(rootView, 50);
@@ -411,11 +484,12 @@ public class MainFinishedActivity extends AppCompatActivity{
             {
                 tvType.setTextColor(BGColor[position%BGColorNum]);
                 tvType.setText(taskTotalInfo.get(position).getString("type"));
-                checkBox.setText("Checked\nFinish it before:"+taskTotalInfo.get(position).getString("ddl"));
+                tvMember.setText("Executer: "+taskTotalInfo.get(position).getString("memberName"));
+                checkBox.setText("Checked\nFinish it before: "+taskTotalInfo.get(position).getString("ddl"));
                 tvContent.setText("Task Describition:\n"+taskTotalInfo.get(position).getString("content"));
                 checkBox.setChecked(taskTotalInfo.get(position).getBoolean("checked"));
             }
-            if(!occupation.equals("Producer"))
+            if(!occupation.equals("Producer")||!projectDoing)
             {
                 checkBox.setClickable(false);
             }
@@ -423,7 +497,6 @@ public class MainFinishedActivity extends AppCompatActivity{
             checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
                 @Override
                 public void onCheckedChanged(CompoundButton arg0, boolean arg1) {
-                    // TODO Auto-generated method stub
                     if (!taskTotalInfo.isEmpty()) {
                         AVObject testObject = AVObject.createWithoutData("TaskInfo", taskTotalInfo.get(currentPosition).getObjectId());
                         if (checkBox.isChecked()) {

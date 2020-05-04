@@ -7,11 +7,12 @@ import android.util.Log;
 
 import android.content.Intent;
 import android.view.View;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.tongji.lisa1225.myapplication.Application.MyLeanCloudApp;
 
 import java.util.List;
 

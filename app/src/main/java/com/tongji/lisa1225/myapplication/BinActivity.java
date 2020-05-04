@@ -1,5 +1,6 @@
 package com.tongji.lisa1225.myapplication;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v4.view.GravityCompat;
@@ -35,8 +36,10 @@ import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 
 import com.astuetz.PagerSlidingTabStrip;
+import com.tongji.lisa1225.myapplication.Application.MyLeanCloudApp;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class BinActivity extends AppCompatActivity{
@@ -58,6 +61,7 @@ public class BinActivity extends AppCompatActivity{
 
     List<String> projectNameList = new ArrayList<>();//存储项目标题的列表
     List<String> projectIDList = new ArrayList<>();//存储项目ID的列表
+    List<Boolean> projectDoingList = new ArrayList<>();//存储项目状态的列表
     static List<String> taskList = new ArrayList<>();//存储任务名称的列表
     static List<AVObject> taskTotalInfo = new ArrayList<>();//存储leancloud格式的任务列表
     static int currentPosition;//目前任务卡是第几个
@@ -73,6 +77,7 @@ public class BinActivity extends AppCompatActivity{
     private String email,name,occupation,password;
     //项目信息
     private String projectName,projectID;
+    static private boolean projectDoing;
 
     private BinActivity.MyPagerAdapter myPagerAdapter;
 
@@ -86,8 +91,14 @@ public class BinActivity extends AppCompatActivity{
         name = app.getUserName();
         occupation = app.getOccu();
         password = app.getPassword();
-
-        setContentView(R.layout.activity_bin);
+        if(occupation.equals("Producer")) //producer界面
+        {
+            setContentView(R.layout.activity_bin);
+        }
+        else
+        {
+            setContentView(R.layout.activity_bin_ordi);
+        }
         ButterKnife.bind(this);
 
         //切换背景颜色
@@ -107,98 +118,136 @@ public class BinActivity extends AppCompatActivity{
         user_occu.setText(occupation);
         //侧边栏按钮
         navigationView.setItemBackgroundResource(R.color.grey);
-        //navigationView.setCheckedItem(R.id.nav_guardian);
-        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener()
+        if(occupation.equals("Producer")) //producer界面
         {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item)
-            {
-                Intent mainIntent = new Intent(BinActivity.this,MainActivity.class);
-                //各种操作
-                switch (item.getItemId())
-                {
-                    case R.id.tuling:
-                        //Intent mainIntent = new Intent(BinActivity.this,MainActivity.class);
-                        startActivity(mainIntent);
-                        finish();
-                        break;
-                    case R.id.nav_doing:
-                        //Intent mainIntent = new Intent(BinActivity.this,MainActivity.class);
-                        startActivity(mainIntent);
-                        finish();
-                        break;
-                    case R.id.nav_finished:
-                        Intent finished = new Intent(BinActivity.this,MainFinishedActivity.class);
-                        startActivity(finished);
-                        finish();
-                        break;
-                    case R.id.nav_bin://本页面，不需要跳转
-                        break;
-                    case R.id.nav_recycle:
-                        AVObject recycleObject = AVObject.createWithoutData("TaskInfo", taskTotalInfo.get(currentPosition).getObjectId());
-                        recycleObject.put("deleted",false);
-                        recycleObject.saveInBackground().subscribe(new Observer<AVObject>() {
-                            public void onSubscribe(Disposable disposable) {}
-                            public void onNext(AVObject todo) {
-                                // 成功保存之后，执行其他逻辑
+            navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+                @Override
+                public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                    Intent mainIntent = new Intent(BinActivity.this, MainActivity.class);
+                    //各种操作
+                    switch (item.getItemId()) {
+                        case R.id.tuling:
+                            startActivity(mainIntent);
+                            finish();
+                            break;
+                        case R.id.nav_doing:
+                            startActivity(mainIntent);
+                            finish();
+                            break;
+                        case R.id.nav_finished:
+                            Intent finished = new Intent(BinActivity.this, MainFinishedActivity.class);
+                            startActivity(finished);
+                            finish();
+                            break;
+                        case R.id.nav_bin://本页面，不需要跳转
+                            break;
+                        case R.id.nav_recycle:
+                            if(!taskTotalInfo.isEmpty()&&projectDoing) {
+                                AVObject recycleObject = AVObject.createWithoutData("TaskInfo", taskTotalInfo.get(currentPosition).getObjectId());
+                                recycleObject.put("deleted", false);
+                                recycleObject.saveInBackground().subscribe(new Observer<AVObject>() {
+                                    public void onSubscribe(Disposable disposable) {
+                                    }
+
+                                    public void onNext(AVObject todo) {
+                                        // 成功保存之后，执行其他逻辑
+                                        recycleSuccess();
+                                    }
+
+                                    public void onError(Throwable throwable) {
+                                        // 异常处理
+                                    }
+
+                                    public void onComplete() {
+                                    }
+                                });
                             }
-                            public void onError(Throwable throwable) {
-                                // 异常处理
+                            break;
+                        case R.id.nav_detail:
+                            if (!projectNameList.get(0).equals(NO_PROGRAM)) {
+                                Intent detailIntent = new Intent(BinActivity.this, ProgramInfoActivity.class);
+                                detailIntent.putExtra("projectName", projectName);
+                                detailIntent.putExtra("projectID", projectID);
+                                startActivity(detailIntent);
+                            } else {
+                                Toast.makeText(BinActivity.this, "There is no project related to you!", Toast.LENGTH_SHORT).show();
                             }
-                            public void onComplete() {}
-                        });
-                        break;
-                    case R.id.nav_detail:
-                        //todo
-                        //Intent news = new Intent(MainActivity.this, NewsActivity.class);
-                        //startActivity(news);
-                        break;
-                    case R.id.nav_about:
-                        //Intent about = new Intent(MainActivity.this, AboutActivity.class);
-                        //startActivity(about);
-                        break;
-                    case R.id.logout:
-                        //Toasty.info(MainActivity.this, "你觉得可能有新版本吗", Toast.LENGTH_SHORT, true).show();
-                        finish();
-                        break;
-                    default:
+                            break;
+                        case R.id.nav_about:
+                            //Intent about = new Intent(MainActivity.this, AboutActivity.class);
+                            //startActivity(about);
+                            break;
+                        case R.id.logout:
+                            //Toasty.info(MainActivity.this, "你觉得可能有新版本吗", Toast.LENGTH_SHORT, true).show();
+                            finish();
+                            break;
+                        default:
+                    }
+                    //finish();
+                    return true;
                 }
-                //finish();
-                return true;
-            }
-        });
+            });
 
-        toolbar.setNavigationIcon(R.drawable.toolbar_bin);//设置导航栏图标
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                drawerLayout.openDrawer(GravityCompat.START);
-            }
-        });
-
-        //toolbar.setLogo(R.mipmap.home);//设置app logo
-        //toolbar.setTitle(" "+name+" ");//设置主标题
-        //toolbar.setTitleTextColor(getResources().getColor(R.color.darkBlue));
-        //toolbar.setSubtitle(" "+occupation+" ");//设置子标题
-        //toolbar.setSubtitleTextColor(getResources().getColor(R.color.pinkDarkBlue));
-
-        toolbar.inflateMenu(R.menu.toolbar_no_addbtn_menu);//设置右上角的填充菜单
-        //toolbar的按钮点击
-        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                int menuItemId = item.getItemId();
-                if (menuItemId == R.id.action_search) {
-                    Toast.makeText(BinActivity.this , " " , Toast.LENGTH_SHORT).show();
-
-                } else if (menuItemId == R.id.action_notification) {
-                    Toast.makeText(BinActivity.this, " ", Toast.LENGTH_SHORT).show();
+            projectQuery.whereEqualTo("producer", email);
+        }
+        else
+        {
+            navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+                @Override
+                public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                    Intent mainIntent = new Intent(BinActivity.this, MainActivity.class);
+                    //各种操作
+                    switch (item.getItemId()) {
+                        case R.id.tuling:
+                            //Intent mainIntent = new Intent(BinActivity.this,MainActivity.class);
+                            startActivity(mainIntent);
+                            finish();
+                            break;
+                        case R.id.nav_doing:
+                            //Intent mainIntent = new Intent(BinActivity.this,MainActivity.class);
+                            startActivity(mainIntent);
+                            finish();
+                            break;
+                        case R.id.nav_finished:
+                            Intent finished = new Intent(BinActivity.this, MainFinishedActivity.class);
+                            startActivity(finished);
+                            finish();
+                            break;
+                        case R.id.nav_bin://本页面，不需要跳转
+                            break;
+                        case R.id.nav_detail:
+                            if (!projectNameList.get(0).equals(NO_PROGRAM)) {
+                                Intent detailIntent = new Intent(BinActivity.this, ProgramInfoActivity.class);
+                                detailIntent.putExtra("projectName", projectName);
+                                detailIntent.putExtra("projectID", projectID);
+                                startActivity(detailIntent);
+                            } else {
+                                Toast.makeText(BinActivity.this, "There is no project related to you!", Toast.LENGTH_SHORT).show();
+                            }
+                            break;
+                        case R.id.nav_about:
+                            //Intent about = new Intent(MainActivity.this, AboutActivity.class);
+                            //startActivity(about);
+                            break;
+                        case R.id.logout:
+                            //Toasty.info(MainActivity.this, "你觉得可能有新版本吗", Toast.LENGTH_SHORT, true).show();
+                            finish();
+                            break;
+                        default:
+                    }
+                    //finish();
+                    return true;
                 }
-                return true;
-            }
-        });
+            });
+            final AVQuery<AVObject> member1Query = new AVQuery<>("ProjectInfo");
+            member1Query.whereEqualTo("member1", email);
 
-        projectQuery.whereEqualTo("producer", email);
+            final AVQuery<AVObject> member2Query = new AVQuery<>("ProjectInfo");
+            member2Query.whereEqualTo("member2", email);
+
+            projectQuery = AVQuery.or(Arrays.asList(member1Query, member2Query));
+        }
+
         projectQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
             public void onSubscribe(Disposable disposable) {}
             public void onNext(List<AVObject> projectInfo) {
@@ -223,14 +272,38 @@ public class BinActivity extends AppCompatActivity{
             public void onComplete() {}
         });
 
+        toolbar.setNavigationIcon(R.drawable.toolbar_bin);//设置导航栏图标
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
+
+        toolbar.inflateMenu(R.menu.toolbar_no_addbtn_menu);//设置右上角的填充菜单
+        //toolbar的按钮点击
+        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                int menuItemId = item.getItemId();
+                if (menuItemId == R.id.action_notification) {
+                    Toast.makeText(BinActivity.this, " ", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            }
+        });
+
         //项目条目点击事件
         programSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 projectName = programAdapter.getItem(position);
-                projectID = projectIDList.get(position);
-                Toast.makeText(BinActivity.this, projectName, Toast.LENGTH_SHORT).show();
+                if(!projectName.equals(NO_PROGRAM))
+                {
+                    projectID = projectIDList.get(position);
+                }
+                //Toast.makeText(BinActivity.this, projectName, Toast.LENGTH_SHORT).show();
                 parent.setVisibility(View.VISIBLE);
                 showTask();
             }
@@ -274,6 +347,19 @@ public class BinActivity extends AppCompatActivity{
         });
     }
 
+    private void recycleSuccess()
+    {
+        Toast.makeText(BinActivity.this , "Recycle Success!" , Toast.LENGTH_SHORT).show();
+        //showTask();
+        restartActivity(BinActivity.this);
+    }
+
+    public void restartActivity(Activity activity) {
+
+        activity.finish();
+        activity.startActivity(activity.getIntent());
+
+    }
     private void setPaperAdapter()
     {
         pager.setAdapter(myPagerAdapter);
@@ -365,6 +451,7 @@ public class BinActivity extends AppCompatActivity{
 
         @BindView(R.id.taskType) TextView tvType;
         //@BindView(R.id.taskDDL) TextView tvDDL;
+        @BindView(R.id.taskMember) TextView tvMember;
         @BindView(R.id.taskContent) TextView tvContent;
         @BindView(R.id.id_checkbox) CheckBox checkBox;
 
@@ -394,10 +481,11 @@ public class BinActivity extends AppCompatActivity{
             {
                 tvType.setTextColor(BGColor[position%BGColorNum]);
                 tvType.setText(taskTotalInfo.get(position).getString("type"));
+                tvMember.setText("Executer: "+taskTotalInfo.get(position).getString("memberName"));
                 checkBox.setText("Finish it before:"+taskTotalInfo.get(position).getString("ddl"));
                 tvContent.setText("Task Describition:\n"+taskTotalInfo.get(position).getString("content"));
                 checkBox.setChecked(taskTotalInfo.get(position).getBoolean("finished"));
-                checkBox.setClickable(false);
+                checkBox.setClickable(false);//回收站中无法完成任务
             }
 
             checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){

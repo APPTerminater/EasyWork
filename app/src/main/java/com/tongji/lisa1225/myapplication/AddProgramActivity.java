@@ -13,6 +13,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.tongji.lisa1225.myapplication.Application.MyLeanCloudApp;
+
 import java.util.List;
 
 import cn.leancloud.AVObject;
@@ -25,13 +27,11 @@ import butterknife.BindView;
 
 public class AddProgramActivity extends AppCompatActivity {
     private static final String TAG = "AddProgramActivity";
-    private static final int REQUEST_SIGNUP = 0;
 
     @BindView(R.id.programName) EditText _programNameText;
     @BindView(R.id.member1) EditText _memberText1;
     @BindView(R.id.member2) EditText _memberText2;
     @BindView(R.id.btn_submit) Button _submitButton;
-    //@BindView(R.id.link_signup) TextView _signupLink;
 
     private AVObject testObject = new AVObject("ProjectInfo");
     private AVQuery<AVObject> query = new AVQuery<>("ProjectInfo");
@@ -276,6 +276,13 @@ public class AddProgramActivity extends AppCompatActivity {
         testObject.put("member1", member1);
         testObject.put("member2",member2);
         testObject.put("finished",false);
+        testObject.put("testing",false);
+        testObject.put("test1",false);
+        testObject.put("test2",false);
+        testObject.put("test3",false);
+        testObject.put("test4",false);
+        testObject.put("test5",false);
+
 
         // 将对象保存到云端
         testObject.saveInBackground().subscribe(new Observer<AVObject>() {

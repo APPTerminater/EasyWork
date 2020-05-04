@@ -18,8 +18,24 @@
     <string name="member3">Member3 Email(Optional)</string>
     <string name="submit">SUBMIT</string>
 
+    <!--测试界面-->
+    <string name="test1">APP ID</string>
+    <string name="test2">FB Ads ID</string>
+    <string name="test3">Is Game flow Normal</string>
+    <string name="test4">Share and Leaderboard</string>
+    <string name="test5">Can Ads Pop Up</string>
+
+    <!--项目信息界面-->
+    <string name="start_test">Start Test</string>
+    <string name="testing">Testing...</string>
+    <string name="restart_project">Restart Project</string>
+    <string name="progress_testing">Progress: Testing!</string>
+    <string name="progress_finished">Progress: Finished!</string>
+
+    <!--任务卡界面-->
     <string name="task_name">TaskName</string>
     <string name="task_member">The executer\'s email</string>
+    <string name="task_member_name">The executer\'s name</string>
     <string name="task_ddl">Double click to set deadline time</string>
     <string name="task_subscribe">Content</string>
     <string name="task_type">Task Type</string>
@@ -32,4 +48,5 @@
     <string name="bin">Bin</string>
     <string name="edit_pro">Edit Project</string>
     <string name="detail">Project Detail</string>
+    <string name="restore">Restore Task</string>
 </resources>

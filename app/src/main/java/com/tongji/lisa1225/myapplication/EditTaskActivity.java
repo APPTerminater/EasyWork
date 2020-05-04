@@ -271,9 +271,13 @@ public class EditTaskActivity extends AppCompatActivity {
     //成功修改任务，返回主界面
     private void onSubmitSuccess() {
         _submitButton.setEnabled(true);
+        if (MainActivity.instance != null) {
+            MainActivity.instance.finish();
+        }
         //返回项目界面
         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
         startActivity(intent);
+        finish();
     }
     //修改失败
     private void onSubmitFailed() {

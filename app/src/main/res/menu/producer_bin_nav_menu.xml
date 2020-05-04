@@ -23,7 +23,7 @@
         <item
             android:id="@+id/nav_recycle"
             android:icon="@drawable/nav_binout"
-            android:title="Recycle Task" />
+            android:title="@string/restore" />
         <item
             android:id="@+id/nav_detail"
             android:icon="@drawable/nav_detail"

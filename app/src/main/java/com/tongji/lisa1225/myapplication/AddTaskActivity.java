@@ -44,11 +44,13 @@ public class AddTaskActivity extends AppCompatActivity {
     @BindView(R.id.taskDDL) EditText etDDL;
     @BindView(R.id.Subscribe) EditText etContent;
     @BindView(R.id.btn_submit) Button _submitButton;
-    private String projectID,taskType,taskName,taskMemberEmail,taskDDL,taskContent;
+    private String projectID,taskType,taskName,taskMemberEmail,taskMemberName,taskDDL,taskContent;
 
     private AVObject testObject = new AVObject("TaskInfo");
     private AVQuery<AVObject> taskQuery = new AVQuery<>("TaskInfo");
     private AVQuery<AVObject> projectQuery = new AVQuery<>("ProjectInfo");
+    private AVQuery<AVObject> nameQuery = new AVQuery<>("UserInfo");
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -201,7 +203,7 @@ public class AddTaskActivity extends AppCompatActivity {
                 if(taskMemberEmail.equals(ProjectInfo.getString("member1"))
                         ||taskMemberEmail.equals(ProjectInfo.getString("member2")))
                 {
-                    addTask();
+                    queryMemberName();
                 }
                 else
                 {
@@ -214,12 +216,32 @@ public class AddTaskActivity extends AppCompatActivity {
         });
     }
 
+    private void queryMemberName()
+    {
+        nameQuery.whereEqualTo("email", taskMemberEmail);
+        nameQuery.findInBackground().subscribe(new Observer<List<AVObject>>() {
+            public void onSubscribe(Disposable disposable) {}
+            public void onNext(List<AVObject> userInfo) {
+                if(userInfo.size()!=0)
+                {
+                    taskMemberName = userInfo.get(0).getString("name");
+                    addTask();
+                }
+            }
+            public void onError(Throwable throwable) {}
+            public void onComplete() {}
+        });
+
+    }
+
     public void addTask()
     {
+
         testObject.put("projectID",projectID);
         testObject.put("type",taskType);
         testObject.put("taskName",taskName);
         testObject.put("member", taskMemberEmail);
+        testObject.put("memberName",taskMemberName);
         testObject.put("ddl",taskDDL);
         testObject.put("content",taskContent);
         testObject.put("finished",false);//任务是否完成
@@ -245,8 +267,12 @@ public class AddTaskActivity extends AppCompatActivity {
     private void onSubmitSuccess() {
         _submitButton.setEnabled(true);
         //返回项目界面
+        if (MainActivity.instance != null) {
+            MainActivity.instance.finish();
+        }
         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
         startActivity(intent);
+        finish();
     }
     //添加失败
     private void onSubmitFailed() {
