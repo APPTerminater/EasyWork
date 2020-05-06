@@ -28,7 +28,6 @@ public class ProgramInfoActivity extends AppCompatActivity{
     private int checkedTask = 0,totalTask;
     private Boolean testing = false,finished = false;
 
-    //@BindView(R.id.projectName) TextView tvProject;
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.producer) TextView tvProducer;
     @BindView(R.id.member1) TextView tvMember1;

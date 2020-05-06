@@ -155,7 +155,6 @@ public class EditTaskActivity extends AppCompatActivity {
                 new Runnable() {
                     public void run() {
                         // 判断输入的任务名在项目中是否有重复、完成的成员是否在项目中
-                        //todo
                         isNameDuplicate();
                         progressDialog.dismiss();
                     }

@@ -33,7 +33,7 @@
     <string name="progress_finished">Progress: Finished!</string>
 
     <!--任务卡界面-->
-    <string name="task_name">TaskName</string>
+    <string name="task_name">Task Name</string>
     <string name="task_member">The executer\'s email</string>
     <string name="task_member_name">The executer\'s name</string>
     <string name="task_ddl">Double click to set deadline time</string>

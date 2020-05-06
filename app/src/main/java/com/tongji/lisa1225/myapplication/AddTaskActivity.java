@@ -17,6 +17,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.tongji.lisa1225.myapplication.Application.MyLeanCloudApp;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -44,23 +46,28 @@ public class AddTaskActivity extends AppCompatActivity {
     @BindView(R.id.taskDDL) EditText etDDL;
     @BindView(R.id.Subscribe) EditText etContent;
     @BindView(R.id.btn_submit) Button _submitButton;
-    private String projectID,taskType,taskName,taskMemberEmail,taskMemberName,taskDDL,taskContent;
+    private String projectID,projectName,taskType,taskName,taskMemberEmail,taskMemberName,taskDDL,taskContent;
+    private String email;
 
     private AVObject testObject = new AVObject("TaskInfo");
     private AVQuery<AVObject> taskQuery = new AVQuery<>("TaskInfo");
     private AVQuery<AVObject> projectQuery = new AVQuery<>("ProjectInfo");
     private AVQuery<AVObject> nameQuery = new AVQuery<>("UserInfo");
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_addtask);
         ButterKnife.bind(this);
+
+        MyLeanCloudApp app = (MyLeanCloudApp)this.getApplication();
+        email = app.getEmail();
+
         Intent intent = getIntent();
         //设置项目名称文字
         projectID = intent.getStringExtra("projectID");
-        tvProject.setText(intent.getStringExtra("projectName"));
+        projectName = intent.getStringExtra("projectName");
+        tvProject.setText(projectName);
         //tvProject.setText(projectID);
 
         //设置任务类型的下拉框
@@ -134,7 +141,6 @@ public class AddTaskActivity extends AppCompatActivity {
                 new Runnable() {
                     public void run() {
                         // 判断输入的任务名在项目中是否有重复、完成的成员是否在项目中
-                        //todo
                         isNameDuplicate();
                         progressDialog.dismiss();
                     }
@@ -238,8 +244,10 @@ public class AddTaskActivity extends AppCompatActivity {
     {
 
         testObject.put("projectID",projectID);
+        testObject.put("projectName",projectName);
         testObject.put("type",taskType);
         testObject.put("taskName",taskName);
+        testObject.put("producer",email);
         testObject.put("member", taskMemberEmail);
         testObject.put("memberName",taskMemberName);
         testObject.put("ddl",taskDDL);

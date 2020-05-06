@@ -232,8 +232,10 @@ public class MainActivity extends AppCompatActivity{
                 public boolean onMenuItemClick(MenuItem item) {
                     int menuItemId = item.getItemId();
                     if (menuItemId == R.id.action_notification) {
-                        Toast.makeText(MainActivity.this, " ", Toast.LENGTH_SHORT).show();
-                    } else if (menuItemId == R.id.action_add) {
+                        Intent notiIntent = new Intent(getApplicationContext(), NotificationActivity.class);
+                        startActivity(notiIntent);
+                    }
+                    else if (menuItemId == R.id.action_add) {
                         Intent intent = new Intent(getApplicationContext(), AddProgramActivity.class);
                         startActivity(intent);
                     }
@@ -333,7 +335,8 @@ public class MainActivity extends AppCompatActivity{
                 public boolean onMenuItemClick(MenuItem item) {
                     int menuItemId = item.getItemId();
                     if (menuItemId == R.id.action_notification) {
-                        Toast.makeText(MainActivity.this, " ", Toast.LENGTH_SHORT).show();
+                        Intent notiIntent = new Intent(getApplicationContext(), NotificationActivity.class);
+                        startActivity(notiIntent);
                     }
                     return true;
                 }
@@ -593,7 +596,7 @@ public class MainActivity extends AppCompatActivity{
                 tvContent.setText("Task Describition:\n"+taskTotalInfo.get(position).getString("content"));
 
             }
-            if(occupation.equals("Producer")||!projectDoing)//todo
+            if(occupation.equals("Producer")||!projectDoing)
             {
                 checkBox.setClickable(false);
             }

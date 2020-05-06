@@ -109,7 +109,6 @@ public class EditProgramActivity extends AppCompatActivity {
                 new Runnable() {
                     public void run() {
                         // 判断输入的账号密码是否正确
-                        //todo
                         checkEmail1();
                         // On complete call either onLoginSuccess or onLoginFailed
                         progressDialog.dismiss();

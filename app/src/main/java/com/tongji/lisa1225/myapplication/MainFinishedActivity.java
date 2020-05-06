@@ -200,8 +200,8 @@ public class MainFinishedActivity extends AppCompatActivity{
             public boolean onMenuItemClick(MenuItem item) {
                 int menuItemId = item.getItemId();
                 if (menuItemId == R.id.action_notification) {
-                    Toast.makeText(MainFinishedActivity.this, " ", Toast.LENGTH_SHORT).show();
-                }
+                    Intent notiIntent = new Intent(getApplicationContext(), NotificationActivity.class);
+                    startActivity(notiIntent);                }
                 return true;
             }
         });
