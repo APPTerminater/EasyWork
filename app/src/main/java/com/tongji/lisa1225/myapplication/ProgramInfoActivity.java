@@ -51,11 +51,12 @@ public class ProgramInfoActivity extends AppCompatActivity{
         password = app.getPassword();
 
         setContentView(R.layout.activity_programinfo);
+
+        ButterKnife.bind(this);
         if (!occupation.equals("Producer")) //producer界面
         {
             btnChange.setVisibility(View.INVISIBLE);
         }
-        ButterKnife.bind(this);
         Intent intent = getIntent();
         //设置项目名称文字
         projectID = intent.getStringExtra("projectID");
